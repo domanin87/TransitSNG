@@ -14,7 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(express.json({ limit: '5mb' }));
 
-const ALLOW = (process.env.ALLOW_ORIGINS || '*').split(',').map(s=>s.trim()).filter(Boolean);
+const ALLOW = (process.env.ALLOW_ORIGINS || 'https://transitsng-frontend.onrender.com,http://localhost:3000').split(',').map(s=>s.trim()).filter(Boolean);
 const corsOptions = ALLOW.length===0 || ALLOW.includes('*') ? {} : { origin: ALLOW };
 app.use(cors(corsOptions));
 
