@@ -11,13 +11,23 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 
 async function migrate() {
   try {
-    // Создаем таблицы с простыми типами
+    // Создаем ENUM тип
+    await sequelize.query(`
+      DO $$ 
+      BEGIN 
+        CREATE TYPE "user_role_enum" AS ENUM ('user', 'carrier', 'moderator', 'accountant', 'admin', 'superadmin');
+      EXCEPTION 
+        WHEN duplicate_object THEN null;
+      END $$;
+    `);
+
+    // Создаем таблицу users с правильным ENUM типом
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(50) DEFAULT 'user',
+        role "user_role_enum" DEFAULT 'user',
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);

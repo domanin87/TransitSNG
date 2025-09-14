@@ -8,11 +8,11 @@ const sequelize = new Sequelize(connection, {
   logging: (msg)=> logger.debug(msg)
 });
 
-// Используем STRING вместо ENUM для избежания ошибок миграции
+// Используем ENUM с самого начала для новой базы
 const User = sequelize.define('User', {
   email: { type: DataTypes.STRING, unique: true, allowNull:false },
   passwordHash: { type: DataTypes.STRING, allowNull:false },
-  role: { type: DataTypes.STRING, defaultValue:'user' }, // Изменено с ENUM на STRING
+  role: { type: DataTypes.ENUM('user','carrier','moderator','accountant','admin','superadmin'), defaultValue:'user' },
   level: { type: DataTypes.INTEGER, defaultValue:1 },
   preferredLanguage: { type: DataTypes.STRING, defaultValue:'ru' },
   preferredCurrency: { type: DataTypes.STRING, defaultValue: process.env.BASE_CURRENCY || 'KZT' }
@@ -44,11 +44,11 @@ const DriverLocation = sequelize.define('DriverLocation', {
 User.hasMany(Cargo, { foreignKey:'user_id' });
 Cargo.belongsTo(User, { foreignKey:'user_id' });
 
-// Отключаем автоматическое изменение схемы в production
+// Для новой базы можно использовать sync без alter
 module.exports = { 
   init: async ()=>{ 
     await sequelize.authenticate(); 
-    await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' }); 
+    await sequelize.sync(); 
     return { sequelize, User, Cargo, DriverLocation }; 
   }, 
   sequelize, User, Cargo, DriverLocation 
