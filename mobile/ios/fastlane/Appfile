@@ -1,0 +1,4 @@
+
+app_identifier("com.transitsng.mobile") # Replace with your bundle id
+apple_id("YOUR_APPLE_ID@example.com")   # Replace with your Apple ID
+team_id("YOUR_TEAM_ID")                 # Replace with your Team ID

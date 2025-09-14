@@ -1,0 +1,12 @@
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    match(type: "appstore", readonly: true) # or use match to manage provisioning profiles
+    increment_build_number(xcodeproj: "Runner.xcodeproj")
+    build_app(scheme: "Runner")
+    upload_to_testflight
+  end
+end
