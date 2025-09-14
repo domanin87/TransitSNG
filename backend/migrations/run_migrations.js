@@ -11,7 +11,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 
 async function migrate() {
   try {
-    // пример создания таблиц
+    // Создаем таблицы с простыми типами
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,

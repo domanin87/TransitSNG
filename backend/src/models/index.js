@@ -1,4 +1,3 @@
-
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 const logger = require('../logger');
@@ -9,10 +8,11 @@ const sequelize = new Sequelize(connection, {
   logging: (msg)=> logger.debug(msg)
 });
 
+// Используем STRING вместо ENUM для избежания ошибок миграции
 const User = sequelize.define('User', {
   email: { type: DataTypes.STRING, unique: true, allowNull:false },
   passwordHash: { type: DataTypes.STRING, allowNull:false },
-  role: { type: DataTypes.ENUM('user','carrier','moderator','accountant','admin','superadmin'), defaultValue:'user' },
+  role: { type: DataTypes.STRING, defaultValue:'user' }, // Изменено с ENUM на STRING
   level: { type: DataTypes.INTEGER, defaultValue:1 },
   preferredLanguage: { type: DataTypes.STRING, defaultValue:'ru' },
   preferredCurrency: { type: DataTypes.STRING, defaultValue: process.env.BASE_CURRENCY || 'KZT' }
@@ -29,7 +29,7 @@ const Cargo = sequelize.define('Cargo', {
   price: DataTypes.FLOAT,
   currency: DataTypes.STRING,
   status: { type: DataTypes.ENUM('new','published','in_progress','delivered','cancelled'), defaultValue:'new' },
-  map_enabled: { type: DataTypes.BOOLEAN, defaultValue:false } // whether map tracking enabled for this cargo (after paid)
+  map_enabled: { type: DataTypes.BOOLEAN, defaultValue:false }
 }, { tableName:'cargos', underscored:true });
 
 const DriverLocation = sequelize.define('DriverLocation', {
@@ -44,4 +44,12 @@ const DriverLocation = sequelize.define('DriverLocation', {
 User.hasMany(Cargo, { foreignKey:'user_id' });
 Cargo.belongsTo(User, { foreignKey:'user_id' });
 
-module.exports = { init: async ()=>{ await sequelize.authenticate(); await sequelize.sync({ alter:true }); return { sequelize, User, Cargo, DriverLocation }; }, sequelize, User, Cargo, DriverLocation };
+// Отключаем автоматическое изменение схемы в production
+module.exports = { 
+  init: async ()=>{ 
+    await sequelize.authenticate(); 
+    await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' }); 
+    return { sequelize, User, Cargo, DriverLocation }; 
+  }, 
+  sequelize, User, Cargo, DriverLocation 
+};
