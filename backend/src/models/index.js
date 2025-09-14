@@ -1,55 +1,50 @@
-const { Sequelize, DataTypes } = require('sequelize');
-require('dotenv').config();
-const logger = require('../logger');
-const connection = process.env.DATABASE_URL || 'postgres://postgres:rootpass@localhost:5432/transitsng';
-const sequelize = new Sequelize(connection, {
+const { Sequelize, DataTypes } = require('sequelize')
+const path = require('path')
+
+const DATABASE_URL = process.env.DATABASE_URL || 'sqlite::memory:'
+const opts = DATABASE_URL.startsWith('postgres') ? {
   dialect: 'postgres',
-  dialectOptions: connection.includes('sslmode') ? { ssl: { require: true, rejectUnauthorized: false } } : undefined,
-  logging: (msg)=> logger.debug(msg)
-});
+  protocol: 'postgres',
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
+  logging: false
+} : { logging: false }
 
-// Используем ENUM с самого начала для новой базы
+const sequelize = new Sequelize(DATABASE_URL, opts)
+
 const User = sequelize.define('User', {
-  email: { type: DataTypes.STRING, unique: true, allowNull:false },
-  passwordHash: { type: DataTypes.STRING, allowNull:false },
-  role: { type: DataTypes.ENUM('user','carrier','moderator','accountant','admin','superadmin'), defaultValue:'user' },
-  level: { type: DataTypes.INTEGER, defaultValue:1 },
-  preferredLanguage: { type: DataTypes.STRING, defaultValue:'ru' },
-  preferredCurrency: { type: DataTypes.STRING, defaultValue: process.env.BASE_CURRENCY || 'KZT' }
-}, { tableName:'users', underscored:true });
+  id: { type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
+  name: { type: DataTypes.STRING },
+  email: { type: DataTypes.STRING, unique:true, allowNull:false },
+  passwordHash: { type: DataTypes.STRING },
+  role: { type: DataTypes.STRING, defaultValue: 'user' } // use string to avoid enum migration issues
+}, { tableName: 'users', underscored:true, timestamps:true })
 
-const Cargo = sequelize.define('Cargo', {
-  title: { type: DataTypes.STRING, allowNull:false },
-  description: DataTypes.TEXT,
-  origin_country: DataTypes.STRING,
-  origin_city: DataTypes.STRING,
-  dest_country: DataTypes.STRING,
-  dest_city: DataTypes.STRING,
-  weight: DataTypes.FLOAT,
-  price: DataTypes.FLOAT,
-  currency: DataTypes.STRING,
-  status: { type: DataTypes.ENUM('new','published','in_progress','delivered','cancelled'), defaultValue:'new' },
-  map_enabled: { type: DataTypes.BOOLEAN, defaultValue:false }
-}, { tableName:'cargos', underscored:true });
+const Order = sequelize.define('Order', {
+  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
+  title: { type: DataTypes.STRING },
+  origin: { type: DataTypes.STRING },
+  destination: { type: DataTypes.STRING },
+  price: { type: DataTypes.FLOAT },
+  currency: { type: DataTypes.STRING, defaultValue: 'USD' },
+  weight: { type: DataTypes.FLOAT },
+  status: { type: DataTypes.STRING, defaultValue: 'pending' },
+  trackingEnabled: { type: DataTypes.BOOLEAN, defaultValue: false }
+}, { tableName:'orders', underscored:true, timestamps:true })
 
-const DriverLocation = sequelize.define('DriverLocation', {
-  driver_id: DataTypes.INTEGER,
-  cargo_id: DataTypes.INTEGER,
-  lat: DataTypes.FLOAT,
-  lon: DataTypes.FLOAT,
-  speed: DataTypes.FLOAT,
-  timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
-}, { tableName:'driver_locations', underscored:true });
+const Tariff = sequelize.define('Tariff', {
+  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
+  name: { type: DataTypes.STRING },
+  price_per_ton: { type: DataTypes.FLOAT }
+}, { tableName:'tariffs', underscored:true, timestamps:false })
 
-User.hasMany(Cargo, { foreignKey:'user_id' });
-Cargo.belongsTo(User, { foreignKey:'user_id' });
+const Message = sequelize.define('Message', {
+  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
+  orderId: { type: DataTypes.INTEGER, allowNull:true },
+  senderId: { type: DataTypes.INTEGER, allowNull:true },
+  text: { type: DataTypes.TEXT }
+}, { tableName:'messages', underscored:true, timestamps:true })
 
-// Для новой базы можно использовать sync без alter
-module.exports = { 
-  init: async ()=>{ 
-    await sequelize.authenticate(); 
-    await sequelize.sync(); 
-    return { sequelize, User, Cargo, DriverLocation }; 
-  }, 
-  sequelize, User, Cargo, DriverLocation 
-};
+User.hasMany(Order, { foreignKey: 'user_id' })
+Order.belongsTo(User, { foreignKey: 'user_id' })
+
+module.exports = { sequelize, User, Order, Tariff, Message, initModels: async ()=>{} }

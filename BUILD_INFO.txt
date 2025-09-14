@@ -1,2 +1,0 @@
-TransitSNG package prepared: 2025-09-14T16:15:50.822311Z
-Includes CI workflows for Android (Ubuntu) and iOS (macOS/fastlane).

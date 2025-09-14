@@ -1,2 +1,4 @@
 import React from 'react'
-export default function Admin(){ return (<div className='container'><h2>Админ панель</h2><p>Управление тарифами, модерация, бонусы.</p></div>) }
+export default function Admin(){
+  return (<div className='container'><h2>Админка</h2><p>Здесь интерфейс управления: заказы, тарифы, пользователи. (demo)</p></div>)
+}

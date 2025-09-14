@@ -1,14 +1,16 @@
+TransitSNG - Backend (Node.js + Express + Sequelize + Socket.IO)
 
-TransitSNG Backend with tracking
 
-Endpoints of interest:
-- POST /api/v1/track/location  -- mobile posts location (driverId, cargoId, lat, lon, speed)
-- GET /api/v1/track/driver/:id  -- get last locations for driver
-- socket.io endpoint: connect to backend base URL and listen to 'location_update' events
-- Toggle map for cargo (admin or after payment): POST /api/v1/cargos/:id/map_enable { enabled: true }
+Quick start (local sqlite fallback):
 
-Migrate and run:
-cp .env.example .env
+
+cd backend
 npm install
+# create .env from .env.example and set DATABASE_URL
 npm run migrate
 npm start
+
+Notes:
+- If DATABASE_URL is not set, the server uses sqlite in-memory (for testing).
+- To use Postgres on Render set DATABASE_URL and JWT_SECRET env vars in service settings.
+- Socket.IO runs on the same server; frontend should connect to window.location origin or set REACT_APP_SOCKET_URL.

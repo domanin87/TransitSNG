@@ -1,55 +1,30 @@
-const { Sequelize } = require("sequelize");
-require('dotenv').config();
+require('dotenv').config()
+const { sequelize, User, Order, Tariff } = require('../src/models')
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: "postgres",
-  protocol: "postgres",
-  dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false }
-  }
-});
+async function migrate(){
+  try{
+    await sequelize.authenticate()
+    console.log('DB OK')
+    // Sync models: create missing tables (use alter true to update)
+    await sequelize.sync({ alter: true })
+    console.log('Sync complete')
 
-async function migrate() {
-  try {
-    // Создаем ENUM тип
-    await sequelize.query(`
-      DO $$ 
-      BEGIN 
-        CREATE TYPE "user_role_enum" AS ENUM ('user', 'carrier', 'moderator', 'accountant', 'admin', 'superadmin');
-      EXCEPTION 
-        WHEN duplicate_object THEN null;
-      END $$;
-    `);
-
-    // Создаем таблицу users с правильным ENUM типом
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role "user_role_enum" DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        origin VARCHAR(255),
-        destination VARCHAR(255),
-        cargo_type VARCHAR(100),
-        status VARCHAR(50) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    console.log("✅ Миграции успешно применены!");
-    process.exit(0);
-  } catch (err) {
-    console.error("❌ Ошибка миграций:", err);
-    process.exit(1);
-  }
+    // Seed example tariffs and admin user if not exists
+    const t = await Tariff.findAll()
+    if(t.length===0){
+      await Tariff.bulkCreate([ { name:'Basic', price_per_ton:100 }, { name:'Pro', price_per_ton:200 } ])
+      console.log('Seeded tariffs')
+    }
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@transitsng.local'
+    const admin = await User.findOne({ where:{ email: adminEmail } })
+    if(!admin){
+      const bcrypt = require('bcrypt')
+      const pass = process.env.ADMIN_PASS || 'admin123'
+      const hash = await bcrypt.hash(pass, 10)
+      await User.create({ name:'Admin', email: adminEmail, passwordHash: hash, role:'superadmin' })
+      console.log('Created admin user', adminEmail)
+    }
+    process.exit(0)
+  }catch(e){ console.error(e); process.exit(1) }
 }
-
-migrate();
+migrate()
