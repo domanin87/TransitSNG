@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "migrate": "node migrations/run_migrations.js",
+    "migrate": "npm install && node migrations/run_migrations.js",
     "build": "echo 'no build step for backend'"
   },
   "dependencies": {
