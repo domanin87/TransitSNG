@@ -1,64 +1,58 @@
-
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'pages/home.dart';
+import 'pages/cargo_list.dart';
+import 'pages/chat.dart';
+import 'pages/tariffs.dart';
+import 'pages/map_live.dart';
+import 'pages/admin.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatefulWidget {
-  @override State<MyApp> createState() => _MyAppState();
+void main() {
+  runApp(TransitSNGApp());
 }
 
-class _MyAppState extends State<MyApp> {
-  IO.Socket? socket;
-  StreamSubscription<Position>? posStream;
-  bool tracking = false;
-  int driverId = 1001; // demo driver id
-  int cargoId = 1; // demo cargo id
-  String backendBase = 'https://transitsng-backend-v2.onrender.com'; // set your backend
-
-  @override void initState(){
-    super.initState();
-    // connect socket
-    socket = IO.io(backendBase, <String, dynamic>{ 'transports': ['websocket'], 'autoConnect': false });
-    socket?.connect();
-    socket?.on('connect', (_) => print('socket connected: ' + socket!.id));
-    socket?.on('location_update', (data) => print('loc update: $data'));
+class TransitSNGApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Транзит СНГ',
+      theme: ThemeData(primarySwatch: Colors.indigo),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [Locale('ru'), Locale('kk'), Locale('uz'), Locale('uk'), Locale('az')],
+      home: MainRouter(),
+    );
   }
+}
 
-  void startTracking() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if(!serviceEnabled) return;
-    LocationPermission permission = await Geolocator.checkPermission();
-    if(permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
-    if(permission == LocationPermission.deniedForever) return;
+class MainRouter extends StatefulWidget {
+  @override
+  _MainRouterState createState() => _MainRouterState();
+}
 
-    posStream = Geolocator.getPositionStream().listen((Position pos) {
-      final lat = pos.latitude;
-      final lon = pos.longitude;
-      // emit via socket
-      socket?.emit('driver_location', { 'driverId': driverId, 'cargoId': cargoId, 'lat': lat, 'lon': lon, 'speed': pos.speed });
-      // also POST to REST for persistence
-      try{
-        http.post(Uri.parse('$backendBase/api/v1/track/location'), body: json.encode({ 'driverId': driverId, 'cargoId': cargoId, 'lat': lat, 'lon': lon, 'speed': pos.speed }), headers: {'Content-Type':'application/json'});
-      }catch(e){}
-    });
-    setState(()=> tracking = true);
-  }
+class _MainRouterState extends State<MainRouter> {
+  int _selected = 0;
+  final _pages = [HomePage(), CargoListPage(), ChatPage(), TariffsPage(), LiveMapPage(), AdminPage()];
 
-  void stopTracking(){ posStream?.cancel(); setState(()=> tracking=false); }
-
-  @override void dispose(){ posStream?.cancel(); socket?.disconnect(); super.dispose(); }
-
-  @override Widget build(BuildContext context){
-    return MaterialApp(home: Scaffold(appBar: AppBar(title: Text('TransitSNG Mobile')),
-      body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        ElevatedButton(onPressed: tracking? stopTracking : startTracking, child: Text(tracking? 'Stop tracking' : 'Start tracking')),
-        SizedBox(height:20),
-        Text('Driver ID: $driverId, Cargo ID: $cargoId')
-      ])),));
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: AnimatedSwitcher(duration: Duration(milliseconds: 400), child: _pages[_selected]),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selected,
+        onTap: (i) => setState(() => _selected = i),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Главная'),
+          BottomNavigationBarItem(icon: Icon(Icons.local_shipping), label: 'Грузы'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Чат'),
+          BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Тарифы'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Карта'),
+          BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings), label: 'Админ'),
+        ],
+      ),
+    );
   }
 }
