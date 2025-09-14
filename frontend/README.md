@@ -1,7 +1,14 @@
+TransitSNG Frontend (light theme with soft blue accents)
 
-TransitSNG Frontend with Live Tracking & Map.
+Run locally:
 
-- Live map subscribes to socket.io events 'location_update' and shows markers.
-- Map visible for cargos where `map_enabled` is true (set via admin or after payment).
-- Cities typeahead available in search fields (frontend/public/cities.json).
-- Sample cards on home page show hidden contacts until login.
+cd frontend
+npm install
+npm run dev
+
+Build:
+
+npm run build
+npm run preview
+
+Notes: To connect to backend, change API calls to your backend endpoints.

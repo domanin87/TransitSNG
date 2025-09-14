@@ -1,27 +1,24 @@
-
-import React from 'react'
+import React, {useState} from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home.jsx'
-import CargoList from './pages/CargoList.jsx'
-import Chat from './pages/Chat.jsx'
-import Tariffs from './pages/Tariffs.jsx'
-import LiveMap from './pages/LiveMap.jsx'
-import Admin from './pages/Admin.jsx'
-import Header from './components/Header.jsx'
+import Header from './components/Header'
+import Home from './pages/Home'
+import Services from './pages/Services'
+import Login from './pages/Login'
+import Admin from './pages/Admin'
+
 export default function App(){
+  const [dark,setDark] = useState(false)
   return (
-    <BrowserRouter>
-      <Header/>
-      <main className="container">
+    <div className={dark ? 'theme-dark' : 'theme-light'}>
+      <BrowserRouter>
+        <Header dark={dark} setDark={setDark} />
         <Routes>
-          <Route path="/" element={<Home/>} />
-          <Route path="/cargo" element={<CargoList/>} />
-          <Route path="/chat" element={<Chat/>} />
-          <Route path="/tariffs" element={<Tariffs/>} />
-          <Route path="/map" element={<LiveMap/>} />
-          <Route path="/admin" element={<Admin/>} />
+          <Route path='/' element={<Home/>} />
+          <Route path='/services' element={<Services/>} />
+          <Route path='/login' element={<Login/>} />
+          <Route path='/admin' element={<Admin/>} />
         </Routes>
-      </main>
-    </BrowserRouter>
+      </BrowserRouter>
+    </div>
   )
 }
