@@ -38,8 +38,8 @@ export default function Tariffs(){
     
     // Безопасное извлечение значений с проверкой на существование
     const usdRate = rate?.USD || 1
-    const kztRate = rate?.KZT || 450
-    const rubRate = rate?.RUB || 90
+    const kztRate = rate?.KZT || 540
+    const rubRate = rate?.RUB || 85
     
     setPrice({
       usd: base, 
