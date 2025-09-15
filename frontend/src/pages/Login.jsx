@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-export default function Login() {
+export default function Login({ setUser }) {
 const [email, setEmail] = useState('')
 const [password, setPassword] = useState('')
 const [rememberMe, setRememberMe] = useState(false)
 
 const handleLogin = (e) => {
 e.preventDefault()
+
+
 // Проверка суперадмина
 if (email === 'adomanin87' && password === '558554T') {
   const userData = {
@@ -19,8 +21,9 @@ if (email === 'adomanin87' && password === '558554T') {
   }
   localStorage.setItem('user', JSON.stringify(userData))
   localStorage.setItem('token', userData.token)
+  setUser(userData)
   alert('Вход выполнен как суперадмин')
-  window.location.href = '/admin/dashboard'
+  window.location.href = '#/admin/dashboard'
   return
 }
 
@@ -34,8 +37,9 @@ const userData = {
 }
 localStorage.setItem('user', JSON.stringify(userData))
 localStorage.setItem('token', userData.token)
+setUser(userData)
 alert('Вход выполнен')
-window.location.href = '/'
+window.location.href = '#/'
 }
 
 return (
@@ -76,13 +80,15 @@ style={{ marginRight: 8 }}
 <button type="submit" className="btn">Войти</button>
 </div>
 </form>
+
+text
     <div style={{ marginTop: 20, textAlign: 'center' }}>
       Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
     </div>
 
     <div style={{ marginTop: 15, padding: 15, background: '#f5f5f5', borderRadius: 8, fontSize: 14 }}>
       <strong>Тестовые данные:</strong>
-      <div>Суперадмин: adomanin87 </div>
+      <div>Суперадмин: adomanin87 / 558554T</div>
     </div>
   </div>
 </div>

@@ -12,12 +12,17 @@ import Verifications from './Verifications';
 import Settings from './Settings';
 
 const Admin = () => {
-const [userRole, setUserRole] = useState('moderator'); // По умолчанию, будет определяться из авторизации
+const [userRole, setUserRole] = useState('moderator');
 
 // Проверяем авторизацию при загрузке компонента
 useEffect(() => {
+try {
 const userData = JSON.parse(localStorage.getItem('user') || '{}');
 setUserRole(userData.role || 'moderator');
+} catch (e) {
+console.error('Error parsing user data:', e);
+setUserRole('moderator');
+}
 }, []);
 
 return (

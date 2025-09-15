@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react'
-import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Home from './pages/Home'
 import Services from './pages/Services'
@@ -8,7 +8,7 @@ import MapPage from './pages/MapPage'
 import ChatPage from './pages/ChatPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Admin from './pages/Admin'
+import Admin from './pages/admin/Admin'
 import PostCargo from './pages/PostCargo'
 
 export default function App(){
@@ -17,16 +17,23 @@ const [user, setUser] = useState(null)
 
 useEffect(() => {
 document.documentElement.classList.toggle('theme-dark', dark)
+
 // Проверяем авторизацию при загрузке приложения
 const userData = localStorage.getItem('user')
 if (userData) {
-  setUser(JSON.parse(userData))
+  try {
+    setUser(JSON.parse(userData))
+  } catch (e) {
+    console.error('Error parsing user data:', e)
+    localStorage.removeItem('user')
+  }
 }
 }, [dark])
 
 return (
-<Router>
+<div className="app">
 <Header dark={dark} setDark={setDark} user={user} setUser={setUser} />
+<main className="main-content">
 <Routes>
 <Route path='/' element={<Home user={user} />} />
 <Route path='/services' element={<Services user={user} />} />
@@ -38,6 +45,7 @@ return (
 <Route path='/post' element={<PostCargo />} />
 <Route path='/admin/*' element={<Admin />} />
 </Routes>
-</Router>
+</main>
+</div>
 )
 }
