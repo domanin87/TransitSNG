@@ -4,9 +4,13 @@ const Settings = ({ userRole }) => {
 const [settings, setSettings] = useState({
 siteName: 'Транзит СНГ',
 adminEmail: 'admin@transitsng.ru',
+supportEmail: 'support@transitsng.ru',
 defaultLanguage: 'ru',
 trialPeriod: 14,
-commissionRate: 5
+commissionRate: 5,
+currency: '₸',
+smsNotifications: true,
+emailNotifications: true
 });
 
 const isSuperAdmin = userRole === 'superadmin';
@@ -30,6 +34,8 @@ return (
 return (
 <div>
 <h2>Настройки системы</h2>
+
+
   <div className="card" style={{ marginBottom: 20 }}>
     <h3>Основные настройки</h3>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -48,6 +54,15 @@ return (
           type="email" 
           value={settings.adminEmail} 
           onChange={(e) => setSettings({...settings, adminEmail: e.target.value})} 
+          className="input" 
+        />
+      </div>
+      <div>
+        <label>Email поддержки</label>
+        <input 
+          type="email" 
+          value={settings.supportEmail} 
+          onChange={(e) => setSettings({...settings, supportEmail: e.target.value})} 
           className="input" 
         />
       </div>
@@ -81,15 +96,110 @@ return (
           className="input" 
         />
       </div>
+      <div>
+        <label>Валюта</label>
+        <select 
+          value={settings.currency} 
+          onChange={(e) => setSettings({...settings, currency: e.target.value})} 
+          className="input"
+        >
+          <option value="₸">Тенге (₸)</option>
+          <option value="₽">Рубль (₽)</option>
+          <option value="$">Доллар ($)</option>
+          <option value="€">Евро (€)</option>
+        </select>
+      </div>
     </div>
-    <div style={{ marginTop: 20, textAlign: 'right' }}>
-      <button className="btn" onClick={saveSettings}>Сохранить настройки</button>
+  </div>
+
+  <div className="card" style={{ marginBottom: 20 }}>
+    <h3>Уведомления</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h4>SMS уведомления</h4>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Включить отправку SMS уведомлений пользователям</p>
+        </div>
+        <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '24px' }}>
+          <input 
+            type="checkbox" 
+            checked={settings.smsNotifications} 
+            onChange={(e) => setSettings({...settings, smsNotifications: e.target.checked})} 
+            style={{ opacity: 0, width: 0, height: 0 }}
+          />
+          <span style={{
+            position: 'absolute',
+            cursor: 'pointer',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: settings.smsNotifications ? '#4ade80' : '#ccc',
+            transition: '.4s',
+            borderRadius: '24px'
+          }}>
+            <span style={{
+              position: 'absolute',
+              content: '',
+              height: '18px',
+              width: '18px',
+              left: settings.smsNotifications ? '26px' : '3px',
+              bottom: '3px',
+              backgroundColor: 'white',
+              transition: '.4s',
+              borderRadius: '50%'
+            }} />
+          </span>
+        </label>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h4>Email уведомления</h4>
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>Включить отправку email уведомлений пользователям</p>
+        </div>
+        <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '24px' }}>
+          <input 
+            type="checkbox" 
+            checked={settings.emailNotifications} 
+            onChange={(e) => setSettings({...settings, emailNotifications: e.target.checked})} 
+            style={{ opacity: 0, width: 0, height: 0 }}
+          />
+          <span style={{
+            position: 'absolute',
+            cursor: 'pointer',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: settings.emailNotifications ? '#4ade80' : '#ccc',
+            transition: '.4s',
+            borderRadius: '24px'
+          }}>
+            <span style={{
+              position: 'absolute',
+              content: '',
+              height: '18px',
+              width: '18px',
+              left: settings.emailNotifications ? '26px' : '3px',
+              bottom: '3px',
+              backgroundColor: 'white',
+              transition: '.4s',
+              borderRadius: '50%'
+            }} />
+          </span>
+        </label>
+      </div>
     </div>
+  </div>
+
+  <div style={{ textAlign: 'right', marginBottom: 20 }}>
+    <button className="btn" onClick={saveSettings}>Сохранить настройки</button>
   </div>
 
   <div className="card">
     <h3>Опасная зона</h3>
-    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+    <p style={{ marginBottom: '15px', color: '#6b7280' }}>Эти действия не могут быть отменены. Будьте осторожны.</p>
+    <div style={{ display: 'flex', gap: '10px' }}>
       <button style={{ padding: '10px 15px', background: '#f87171', color: 'white', border: 'none', borderRadius: '6px' }}>
         Очистить кеш
       </button>
