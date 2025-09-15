@@ -51,7 +51,7 @@ export default function ChatPage(){
 
     try {
       // Подключаемся к серверу WebSocket
-      socketRef.current = io(process.env.REACT_APP_SOCKET_URL || 'https://cargosng-backend-v2.onrender.com', {
+      socketRef.current = io(process.env.REACT_APP_SOCKET_URL || 'https://transitsng.onrender.com', {
         transports: ['websocket'],
         timeout: 5000
       })
