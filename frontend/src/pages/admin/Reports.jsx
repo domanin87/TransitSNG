@@ -25,7 +25,7 @@ const ordersByDay = [
 ];
 
 const generateReport = () => {
-alert(Отчет сгенерирован за период с ${startDate} по ${endDate});
+alert(`Отчет сгенерирован за период с ${startDate} по ${endDate}`);
 };
 
 return (
