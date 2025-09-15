@@ -9,5 +9,7 @@
   "tariffs": "Tariffs",
   "map": "Map",
   "chat": "Chat",
-  "admin": "Admin"
+  "admin": "Admin",
+  "top_orders": "Top orders by rating",
+  "contacts_hidden": "Контакты скрыты — войдите, чтобы увидеть"
 }

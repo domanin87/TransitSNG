@@ -1,0 +1,4 @@
+.card{background:var(--card);padding:12px;border-radius:12px;box-shadow:var(--shadow);transform:translateY(12px);opacity:0;transition:transform .42s cubic-bezier(.2,.9,.2,1),opacity .42s;overflow:hidden}
+.card.visible{transform:none;opacity:1}
+.card img{display:block}
+.card-dark{background:#0b1220;color:var(--text)}

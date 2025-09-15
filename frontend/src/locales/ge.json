@@ -10,5 +10,6 @@
   "map": "მარტა",
   "chat": "ჩატი",
   "admin": "ადმინი",
-  "contacts_hidden": "კონტაქტები დამალულია — შესვლა საჭიროა"
+  "contacts_hidden": "კონტაქტები დამალულია — შესვლა საჭიროა",
+  "top_orders": "Top orders by rating"
 }
