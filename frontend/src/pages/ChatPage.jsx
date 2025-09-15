@@ -6,7 +6,7 @@ export default function ChatPage(){
   const socketRef = useRef()
   useEffect(()=>{
     // connect to backend socket endpoint - update URL to your backend
-    socketRef.current = io(process.env.REACT_APP_SOCKET_URL || 'https://cargosng-backend-v2.onrender.com',{transports:['websocket']})
+    socketRef.current = io(process.env.REACT_APP_SOCKET_URL || 'https://transitsng.onrender.com',{transports:['websocket']})
     socketRef.current.on('connect', ()=> console.log('socket connected', socketRef.current.id))
     socketRef.current.on('chat message', msg => setMessages(m=>[...m,msg]))
     return ()=> socketRef.current.disconnect()

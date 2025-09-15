@@ -82,7 +82,7 @@ style={{ marginRight: 8 }}
 
     <div style={{ marginTop: 15, padding: 15, background: '#f5f5f5', borderRadius: 8, fontSize: 14 }}>
       <strong>Тестовые данные:</strong>
-      <div>Суперадмин: adomanin87 / 558554T</div>
+      <div>Суперадмин: adomanin87 </div>
     </div>
   </div>
 </div>
