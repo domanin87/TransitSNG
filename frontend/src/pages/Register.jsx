@@ -72,7 +72,7 @@ export default function Register() {
               type="email" 
               name="email" 
               value={formData.email} 
-              onChange极 handleChange}
+              onChange handleChange}
               className="input" 
               placeholder="Email"
             />
@@ -119,7 +119,7 @@ export default function Register() {
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <button type="submit极 className="btn">Зарегистрироваться</button>
+            <button type="submit className="btn">Зарегистрироваться</button>
           </div>
 
           <div style={{ marginTop: 20, textAlign: 'center' }}>
