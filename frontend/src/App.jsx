@@ -5,7 +5,7 @@ import Home from './pages/Home'
 import Services from './pages/Services'
 import Tariffs from './pages/Tariffs'
 import MapPage from './pages/MapPage'
-import ChatPage极 './pages/ChatPage'
+import ChatPage from './pages/ChatPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/admin/Admin'
@@ -32,11 +32,11 @@ export default function App(){
 
   return (
     <div className="app">
-      <Header dark={dark} setDark={setDark} user={user} setUser={setUser} />
+      <Header dark={dark极 setDark={setDark} user={user} setUser={setUser} />
       <main className="main-content">
         <Routes>
           <Route path='/' element={<Home user={user} />} />
-          <Route path='/services' element={<Services user={user极 />} />
+          <Route path='/services' element={<Services user={user} />} />
           <Route path='/tariffs' element={<Tariffs />} />
           <Route path='/map' element={<MapPage />} />
           <Route path='/chat' element={<ChatPage />} />
