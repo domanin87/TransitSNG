@@ -32,7 +32,7 @@ export default function App(){
 
   return (
     <div className="app">
-      <Header dark={dark极 setDark={setDark} user={user} setUser={setUser} />
+      <Header dark={dark} setDark={setDark} user={user} setUser={setUser} />
       <main className="main-content">
         <Routes>
           <Route path='/' element={<Home user={user} />} />
