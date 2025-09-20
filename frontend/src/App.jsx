@@ -28,7 +28,7 @@ export default function App(){
         localStorage.removeItem('user')
       }
     }
-  }, [dark])
+  }, [dark])}
 
   return (
     <div className="app">
