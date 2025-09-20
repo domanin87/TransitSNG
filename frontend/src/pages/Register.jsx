@@ -72,7 +72,7 @@ export default function Register() {
               type="email" 
               name="email" 
               value={formData.email} 
-              onChange handleChange}
+              onChange={handleChange}
               className="input" 
               placeholder="Email"
             />
@@ -99,7 +99,7 @@ export default function Register() {
               name="password" 
               value={formData.password} 
               onChange={handleChange}
-              className极 input" 
+              className="input" 
               placeholder="Не менее 6 символов"
             />
             {errors.password && <span style={{ color: 'red', fontSize: 14 }}>{errors.password}</span>}
@@ -119,7 +119,7 @@ export default function Register() {
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <button type="submit className="btn">Зарегистрироваться</button>
+            <button type="submit" className="btn">Зарегистрироваться</button>
           </div>
 
           <div style={{ marginTop: 20, textAlign: 'center' }}>
