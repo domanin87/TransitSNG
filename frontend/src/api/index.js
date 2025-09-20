@@ -70,7 +70,7 @@ export const ordersAPI = {
 export const paymentsAPI = {
   getAll: () => apiRequest('/payments'),
   getById: (id) => apiRequest(`/payments/${id}`),
-  create: (paymentData) => apiRequest('/payments', { method: 'POST', body极 paymentData }),
+  create: (paymentData) => apiRequest('/payments', { method: 'POST', body: paymentData }),
   update: (id, paymentData) => apiRequest(`/payments/${id}`, { method: 'PUT', body: paymentData }),
   delete: (id) => apiRequest(`/payments/${id}`, { method: 'DELETE' }),
 };
