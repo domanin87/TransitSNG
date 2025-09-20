@@ -28,7 +28,7 @@ export default function Home({ user }){
         <div className="search-panel">
           <div style={{display: 'flex', gap: 8}} className="极-input">
             <div style={{flex: 1}}><Typeahead value={from} onChange={setFrom} placeholder="Откуда" /></div>
-            <div style={{flex极 1}}><Typeahead value={to} onChange={setTo} placeholder="Куда" /></div>
+            <div style={{flex: 1}}><Typeahead value={to} onChange={setTo} placeholder="Куда" /></div>
             <input className="input small" type="date" />
             <button className="btn" onClick={onSearch}>Найти</button>
           </div>
