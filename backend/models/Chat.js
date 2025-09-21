@@ -1,61 +1,56 @@
-// models/Message.js
 'use strict';
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Message extends Model {
+  class Chat extends Model {
     static associate(models) {
-      // Определите ассоциации здесь
-      Message.belongsTo(models.User, { foreignKey: 'sender_id', as: 'sender' });
-      Message.belongsTo(models.Chat, { foreignKey: 'chat_id', as: 'chat' });
+      // Определяем ассоциации
+      Chat.belongsToMany(models.User, {
+        through: 'ChatParticipants',
+        foreignKey: 'chat_id',
+        as: 'participants'
+      });
+      Chat.hasMany(models.Message, {
+        foreignKey: 'chat_id',
+        as: 'messages'
+      });
+      Chat.belongsTo(models.Cargo, {
+        foreignKey: 'cargo_id',
+        as: 'cargo'
+      });
     }
   }
-  
-  Message.init({
+
+  Chat.init({
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
-    sender_id: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id'
-      }
-    },
-    chat_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Chats',
-        key: 'id'
-      }
-    },
-    content: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
     type: {
-      type: DataTypes.ENUM('text', 'image', 'file', 'location'),
-      defaultValue: 'text'
+      type: DataTypes.ENUM('direct', 'group', 'cargo'),
+      defaultValue: 'direct'
     },
-    attachments: {
-      type: DataTypes.JSONB,
-      defaultValue: []
+    name: DataTypes.STRING,
+    avatar: DataTypes.STRING,
+    is_group: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
-    read_by: {
-      type: DataTypes.JSONB,
-      defaultValue: []
+    cargo_id: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'Cargos',
+        key: 'id'
+      }
     }
   }, {
     sequelize,
-    modelName: 'Message',
-    tableName: 'Messages',
-    timestamps: true,
-    underscored: true
+    modelName: 'Chat',
+    tableName: 'Chats',
+    underscored: true,
+    timestamps: true
   });
-  
-  return Message;
+
+  return Chat;
 };
