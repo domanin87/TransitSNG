@@ -1,69 +1,61 @@
+// models/Message.js
+'use strict';
+const { Model } = require('sequelize');
 
-const messageSchema = new mongoose.Schema({
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  content: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  type: {
-    type: String,
-    enum: ['text', 'image', 'file', 'location'],
-    default: 'text'
-  },
-  attachments: [{
-    url: String,
-    name: String,
-    type: String
-  }],
-  readBy: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    timestamp: { type: Date, default: Date.now }
-  }]
-}, {
-  timestamps: true
-});
-
-const chatSchema = new mongoose.Schema({
-  participants: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    joinedAt: { type: Date, default: Date.now },
-    lastRead: Date
-  }],
-  type: {
-    type: String,
-    enum: ['direct', 'group', 'cargo'],
-    default: 'direct'
-  },
-  name: String,
-  avatar: String,
-  isGroup: {
-    type: Boolean,
-    default: false
-  },
-  cargo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Cargo'
-  },
-  admins: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  messages: [messageSchema],
-  lastMessage: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Message'
+module.exports = (sequelize, DataTypes) => {
+  class Message extends Model {
+    static associate(models) {
+      // Определите ассоциации здесь
+      Message.belongsTo(models.User, { foreignKey: 'sender_id', as: 'sender' });
+      Message.belongsTo(models.Chat, { foreignKey: 'chat_id', as: 'chat' });
+    }
   }
-}, {
-  timestamps: true
-});
-
-chatSchema.index({ participants: 1 });
-chatSchema.index({ cargo: 1 });
-chatSchema.index({ 'lastMessage.createdAt': -1 });
-
-module.exports = mongoose.model('Chat', chatSchema);
+  
+  Message.init({
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+    },
+    sender_id: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      }
+    },
+    chat_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Chats',
+        key: 'id'
+      }
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    type: {
+      type: DataTypes.ENUM('text', 'image', 'file', 'location'),
+      defaultValue: 'text'
+    },
+    attachments: {
+      type: DataTypes.JSONB,
+      defaultValue: []
+    },
+    read_by: {
+      type: DataTypes.JSONB,
+      defaultValue: []
+    }
+  }, {
+    sequelize,
+    modelName: 'Message',
+    tableName: 'Messages',
+    timestamps: true,
+    underscored: true
+  });
+  
+  return Message;
+};
