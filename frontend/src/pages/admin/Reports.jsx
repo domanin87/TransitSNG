@@ -1,77 +1,95 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { reportsAPI } from '../../index';
 
 export default function Reports({ userRole }) {
   const { t } = useTranslation();
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [report, setReport] = useState(null);
+  const [reportType, setReportType] = useState('orders');
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({ startDate: '', endDate: '' });
+  const canView = ['superadmin', 'admin', 'moderator'].includes(userRole);
 
-  const canGenerate = ['superadmin', 'admin'].includes(userRole);
-
-  const generateReport = async () => {
-    if (!canGenerate) return;
+  const loadReports = async () => {
+    if (!canView) return;
     try {
-      const data = await reportsAPI.generate(startDate, endDate);
-      setReport(data);
+      setLoading(true);
+      let data;
+      const params = { startDate: filters.startDate, endDate: filters.endDate };
+      if (reportType === 'orders') {
+        data = await reportsAPI.getOrderReports(params);
+      } else if (reportType === 'payments') {
+        data = await reportsAPI.getPaymentReports(params);
+      } else if (reportType === 'customers') {
+        data = await reportsAPI.getCustomerReports(params);
+      }
+      setReports(data);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const exportReport = async (format) => {
-    if (!canGenerate) return;
-    try {
-      const data = await reportsAPI.export(format);
-      const blob = new Blob([data], { type: format === 'csv' ? 'text/csv' : 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  useEffect(() => {
+    loadReports();
+  }, [reportType, filters]);
 
-  if (!canGenerate) return <div>{t('access_denied')}</div>;
+  if (!canView) return <div className="text-red-500">{t('access_denied')}</div>;
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div>
       <h2 className="text-2xl mb-4">{t('reports')}</h2>
       <div className="card mb-5">
-        <h3 className="text-lg mb-2">{t('generate_report')}</h3>
+        <h3 className="text-lg mb-2">{t('filter_reports')}</h3>
         <div className="grid gap-2">
+          <select
+            className="input"
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+          >
+            <option value="orders">{t('order_reports')}</option>
+            <option value="payments">{t('payment_reports')}</option>
+            <option value="customers">{t('customer_reports')}</option>
+          </select>
           <input
             className="input"
             type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            value={filters.startDate}
+            onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
           />
           <input
             className="input"
             type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            value={filters.endDate}
+            onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
           />
-          <button className="btn" onClick={generateReport}>{t('generate')}</button>
+          <button className="btn" onClick={loadReports}>{t('apply_filters')}</button>
         </div>
       </div>
-      {error && <div className="text-red-500 mb-4">{t('error')}: {error}</div>}
-      {report && (
-        <div className="card">
-          <h3 className="text-lg mb-2">{t('report_results')}</h3>
-          <p>{t('total_orders')}: {report.totalOrders}</p>
-          <p>{t('total_amount')}: {report.totalAmount} USD</p>
-          <div className="mt-4">
-            <button className="btn mr-2" onClick={() => exportReport('csv')}>{t('export_csv')}</button>
-            <button className="btn" onClick={() => exportReport('pdf')}>{t('export_pdf')}</button>
-          </div>
-        </div>
-      )}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left p-3">{t('id')}</th>
+            <th className="text-left p-3">{t('details')}</th>
+            <th className="text-left p-3">{t('date')}</th>
+            <th className="text-left p-3">{t('value')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reports.map((report) => (
+            <tr key={report.id} className="border-b border-gray-200">
+              <td className="p-3">{report.id}</td>
+              <td className="p-3">{report.details}</td>
+              <td className="p-3">{report.date}</td>
+              <td className="p-3">{report.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
