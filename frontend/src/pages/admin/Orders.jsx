@@ -141,4 +141,100 @@ export default function Orders({ userRole }) {
             <th className="text-left p-3">{t('weight')}</th>
             <th className="text-left p-3">{t('price')}</th>
             <th className="text-left p-3">{t('status')}</th>
-            {canEdit && <th className="text-left p-3">{t('
+            {canEdit && <th className="text-left p-3">{t('actions')}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((order) => (
+            <tr key={order.id} className="border-b border-gray-200">
+              <td className="p-3">
+                <input
+                  type="checkbox"
+                  checked={selectedOrders.includes(order.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedOrders([...selectedOrders, order.id]);
+                    } else {
+                      setSelectedOrders(selectedOrders.filter((id) => id !== order.id));
+                    }
+                  }}
+                />
+              </td>
+              <td className="p-3">{order.id}</td>
+              <td className="p-3">
+                {editingOrder === order.id ? (
+                  <Typeahead
+                    className="input"
+                    value={order.from_city}
+                    onChange={(val) => updateOrder(order.id, { ...order, from_city: val })}
+                  />
+                ) : (
+                  order.from_city
+                )}
+              </td>
+              <td className="p-3">
+                {editingOrder === order.id ? (
+                  <Typeahead
+                    className="input"
+                    value={order.to_city}
+                    onChange={(val) => updateOrder(order.id, { ...order, to_city: val })}
+                  />
+                ) : (
+                  order.to_city
+                )}
+              </td>
+              <td className="p-3">
+                {editingOrder === order.id ? (
+                  <input
+                    className="input"
+                    value={order.cargo_type}
+                    onChange={(e) => updateOrder(order.id, { ...order, cargo_type: e.target.value })}
+                  />
+                ) : (
+                  order.cargo_type
+                )}
+              </td>
+              <td className="p-3">
+                {editingOrder === order.id ? (
+                  <input
+                    className="input"
+                    value={order.weight}
+                    type="number"
+                    onChange={(e) => updateOrder(order.id, { ...order, weight: e.target.value })}
+                  />
+                ) : (
+                  order.weight
+                )}
+              </td>
+              <td className="p-3">
+                {editingOrder === order.id ? (
+                  <input
+                    className="input"
+                    value={order.price}
+                    type="number"
+                    onChange={(e) => updateOrder(order.id, { ...order, price: e.target.value })}
+                  />
+                ) : (
+                  order.price
+                )}
+              </td>
+              <td className="p-3">{order.status}</td>
+              {canEdit && (
+                <td className="p-3">
+                  {editingOrder === order.id ? (
+                    <button className="btn small" onClick={() => setEditingOrder(null)}>{t('save')}</button>
+                  ) : (
+                    <>
+                      <button className="btn small mr-2" onClick={() => setEditingOrder(order.id)}>{t('edit')}</button>
+                      <button className="btn small red" onClick={() => deleteOrder(order.id)}>{t('delete')}</button>
+                    </>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
