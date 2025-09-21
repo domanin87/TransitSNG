@@ -18,12 +18,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'https://your-frontend.onrender.com',
+    origin: process.env.FRONTEND_URL || 'https://transitsng-frontend.onrender.com',
     methods: ['GET', 'POST'],
   },
 });
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'https://your-frontend.onrender.com' }));
+app.use(cors({ origin: process.env.FRONTEND_URL || 'https://transitsng-frontend.onrender.com' }));
 app.use(express.json());
 app.use(helmet());
 app.use(compression());
