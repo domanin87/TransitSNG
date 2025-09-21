@@ -4,12 +4,10 @@ import { usersAPI } from './api/users';
 import { driversAPI } from './api/drivers';
 import { tariffsAPI } from './api/tariffs';
 import { paymentsAPI } from './api/payments';
-import { vehiclesAPI } from './api/vehicles';
-import { routesAPI } from './api/routes';
 import { customersAPI } from './api/customers';
-import { invoicesAPI } from './api/invoices';
-import { reportsAPI } from './api/reports';
-import { notificationsAPI } from './api/notifications';
+import { dashboardAPI } from './api/dashboard';
+import { profileAPI } from './api/profile';
+import { settingsAPI } from './api/settings';
 
 const apiRequest = async (method, url, data = null) => {
   try {
@@ -38,18 +36,4 @@ const authAPI = {
   },
 };
 
-export {
-  apiRequest,
-  ordersAPI,
-  usersAPI,
-  authAPI,
-  driversAPI,
-  tariffsAPI,
-  paymentsAPI,
-  vehiclesAPI,
-  routesAPI,
-  customersAPI,
-  invoicesAPI,
-  reportsAPI,
-  notificationsAPI
-};
+export { apiRequest, ordersAPI, usersAPI, authAPI, driversAPI, tariffsAPI, paymentsAPI, customersAPI, dashboardAPI, profileAPI, settingsAPI };

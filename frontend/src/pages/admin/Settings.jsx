@@ -4,11 +4,11 @@ import { settingsAPI } from '../../index';
 
 export default function Settings({ userRole }) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState({ siteName: '', contactEmail: '', maintenanceMode: false });
+  const [settings, setSettings] = useState({ siteName: '', currency: '', language: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const isSuperAdmin = userRole === 'superadmin';
+  const [isEditing, setIsEditing] = useState(false);
+  const canEdit = ['superadmin', 'admin'].includes(userRole);
 
   useEffect(() => {
     loadSettings();
@@ -17,7 +17,7 @@ export default function Settings({ userRole }) {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const data = await settingsAPI.get();
+      const data = await settingsAPI.getSettings();
       setSettings(data);
     } catch (err) {
       setError(err.message);
@@ -27,51 +27,58 @@ export default function Settings({ userRole }) {
   };
 
   const updateSettings = async () => {
-    if (!isSuperAdmin) return;
+    if (!canEdit) return;
     try {
-      await settingsAPI.update(settings);
-      alert(t('settings_updated'));
+      const data = await settingsAPI.updateSettings(settings);
+      setSettings(data);
+      setIsEditing(false);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  if (!isSuperAdmin) return <div>{t('access_denied')}</div>;
   if (loading) return <div className="text-center">{t('loading')}</div>;
   if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div>
       <h2 className="text-2xl mb-4">{t('settings')}</h2>
-      <div className="card max-w-lg">
-        <div className="mb-4">
-          <label className="block mb-1">{t('site_name')}</label>
-          <input
-            className="input"
-            value={settings.siteName}
-            onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">{t('contact_email')}</label>
-          <input
-            className="input"
-            value={settings.contactEmail}
-            onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
-          />
-        </div>
-        <div className="mb-4">
-          <label className="flex items-center">
+      {canEdit && (
+        <div className="card mb-5">
+          <h3 className="text-lg mb-2">{t('site_settings')}</h3>
+          <div className="grid gap-2">
             <input
-              type="checkbox"
-              checked={settings.maintenanceMode}
-              onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
+              className="input"
+              placeholder={t('site_name')}
+              value={settings.siteName}
+              onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+              disabled={!isEditing}
             />
-            <span className="ml-2">{t('maintenance_mode')}</span>
-          </label>
+            <input
+              className="input"
+              placeholder={t('currency')}
+              value={settings.currency}
+              onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+              disabled={!isEditing}
+            />
+            <input
+              className="input"
+              placeholder={t('language')}
+              value={settings.language}
+              onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+              disabled={!isEditing}
+            />
+            {isEditing ? (
+              <>
+                <button className="btn" onClick={updateSettings}>{t('save')}</button>
+                <button className="btn red" onClick={() => setIsEditing(false)}>{t('cancel')}</button>
+              </>
+            ) : (
+              <button className="btn" onClick={() => setIsEditing(true)}>{t('edit')}</button>
+            )}
+          </div>
         </div>
-        <button className="btn" onClick={updateSettings}>{t('save')}</button>
-      </div>
+      )}
     </div>
   );
 }
