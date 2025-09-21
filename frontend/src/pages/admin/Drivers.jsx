@@ -139,4 +139,30 @@ const Drivers = ({ userRole }) => {
                           Одобрить
                         </button>
                         <button 
-                          style={{ marginRight: '8px', padding: '6px 12px', background: '#f87171', color
+                          style={{ marginRight: '8px', padding: '6px 12px', background: '#f87171', color: 'white', border: 'none', borderRadius: '4px', fontSize: '12px' }}
+                          onClick={() => rejectDriver(driver.id)}
+                        >
+                          Отклонить
+                        </button>
+                      </>
+                    )}
+                    {driver.status === 'active' && (
+                      <button 
+                        style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '12px' }}
+                        onClick={() => blockDriver(driver.id)}
+                      >
+                        Заблокировать
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default Drivers;
