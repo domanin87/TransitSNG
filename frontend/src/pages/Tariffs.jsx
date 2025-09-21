@@ -1,23 +1,61 @@
-import React, {useState, useEffect} from 'react'
-import axios from 'axios'
-export default function Tariffs(){
-  const [weight,setWeight]=useState(1), [from,setFrom]=useState('Алматы'), [to,setTo]=useState('Москва'), [price,setPrice]=useState(null), [rate,setRate]=useState(1)
-  useEffect(()=>{ axios.get('https://api.exchangerate.host/latest?base=USD&symbols=KZT,RUB,USD').then(r=>setRate(r.data.rates)).catch(()=>setRate({USD:1})) },[])
-  const calc = ()=>{
-    // sample tariff rule: base 100 USD per ton + distance factor
-    const base = 100 * weight
-    setPrice({usd: base, kzt: Math.round(base * (rate.KZT||450)), rub: Math.round(base * (rate.RUB||90))})
-  }
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import axios from 'axios';
+
+export default function Tariffs({ userRole }) {
+  const { t } = useTranslation();
+  const [tariffs, setTariffs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const canEdit = ['superadmin', 'admin', 'moderator'].includes(userRole);
+
+  useEffect(() => {
+    const fetchTariffs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/tariffs`);
+        setTariffs(response.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTariffs();
+  }, []);
+
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
+
   return (
-    <div className="container">
-      <h2>Калькулятор тарифов</h2>
-      <div style={{display:'flex',gap:12,alignItems:'center'}}>
-        <input className="input small" value={weight} onChange={e=>setWeight(Number(e.target.value))} type="number" />
-        <input className="input small" value={from} onChange={e=>setFrom(e.target.value)} />
-        <input className="input small" value={to} onChange={e=>setTo(e.target.value)} />
-        <button className="btn" onClick={calc}>Рассчитать</button>
-      </div>
-      {price && <div style={{marginTop:12}}><strong>Цена:</strong> {price.usd} USD / {price.kzt} KZT / {price.rub} RUB</div>}
+    <div>
+      <h2 className="text-2xl mb-4">{t('tariffs')}</h2>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left p-3">{t('id')}</th>
+            <th className="text-left p-3">{t('name')}</th>
+            <th className="text-left p-3">{t('price')}</th>
+            {canEdit && <th className="text-left p-3">{t('actions')}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {tariffs.map((tariff) => (
+            <tr key={tariff.id} className="border-b border-gray-200">
+              <td className="p-3">{tariff.id}</td>
+              <td className="p-3">{tariff.name}</td>
+              <td className="p-3">{tariff.price}</td>
+              {canEdit && (
+                <td className="p-3">
+                  <button className="btn small mr-2">{t('edit')}</button>
+                  <button className="btn small red">{t('delete')}</button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  )
+  );
 }
