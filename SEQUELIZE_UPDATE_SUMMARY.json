@@ -1,0 +1,24 @@
+{
+  "replaced_models": [
+    "User.js",
+    "Cargo.js",
+    "Tariff.js"
+  ],
+  "created_models": [
+    "Order.js",
+    "Payment.js",
+    "News.js",
+    "Vacancy.js",
+    "Transport.js"
+  ],
+  "migration_files": [
+    "20250921100324-create-users.js",
+    "20250921100324-create-cargos.js",
+    "20250921100324-create-orders.js",
+    "20250921100324-create-payments.js",
+    "20250921100324-create-tariffs.js",
+    "20250921100324-create-newss.js",
+    "20250921100324-create-vacancys.js",
+    "20250921100324-create-transports.js"
+  ]
+}

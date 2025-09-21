@@ -1,3 +1,7 @@
+const cargosRoutes = require('./routes/cargos');
+const transportRoutes = require('./routes/transport');
+const distanceRoutes = require('./routes/distance');
+const currencyRoutes = require('./routes/currency');
 require('dotenv').config()
 const express = require('express')
 const path = require('path')
@@ -60,3 +64,4 @@ async function start(){
   }
 }
 start()
+\napp.use('/cargos', cargosRoutes);\napp.use('/transport', transportRoutes);\napp.use('/distance', distanceRoutes);\napp.use('/currency', currencyRoutes);\n
