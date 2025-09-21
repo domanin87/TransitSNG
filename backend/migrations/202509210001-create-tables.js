@@ -19,6 +19,15 @@ module.exports = {
       timestamp: {
         type: Sequelize.DATE,
         allowNull: false,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
 
@@ -38,6 +47,14 @@ module.exports = {
       price: {
         type: Sequelize.DECIMAL(10, 2),
       },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
     });
 
     await queryInterface.createTable('Tariffs', {
@@ -54,6 +71,14 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
     });
 
     await queryInterface.createTable('Orders', {
@@ -65,7 +90,15 @@ module.exports = {
       customer_id: {
         type: Sequelize.STRING(50),
       },
+      status: {
+        type: Sequelize.STRING(20),
+        defaultValue: 'pending',
+      },
       created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
@@ -85,6 +118,14 @@ module.exports = {
       phone: {
         type: Sequelize.STRING(20),
       },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
     });
 
     await queryInterface.createTable('Drivers', {
@@ -98,6 +139,18 @@ module.exports = {
       },
       license_number: {
         type: Sequelize.STRING(50),
+      },
+      status: {
+        type: Sequelize.STRING(20),
+        defaultValue: 'available',
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
 
@@ -116,6 +169,18 @@ module.exports = {
       },
       amount: {
         type: Sequelize.DECIMAL(10, 2),
+      },
+      status: {
+        type: Sequelize.STRING(20),
+        defaultValue: 'pending',
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
 
@@ -137,6 +202,14 @@ module.exports = {
       company: {
         type: Sequelize.STRING(100),
       },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
     });
 
     await queryInterface.createTable('Settings', {
@@ -147,12 +220,23 @@ module.exports = {
       },
       site_name: {
         type: Sequelize.STRING(100),
+        defaultValue: 'TransiSNG',
       },
       currency: {
         type: Sequelize.STRING(10),
+        defaultValue: 'RUB',
       },
       language: {
         type: Sequelize.STRING(10),
+        defaultValue: 'ru',
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
 
@@ -170,8 +254,17 @@ module.exports = {
       },
       status: {
         type: Sequelize.STRING(20),
+        defaultValue: 'pending',
       },
       submitted_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.fn('NOW'),
       },
@@ -186,10 +279,12 @@ module.exports = {
       user_id: {
         type: Sequelize.STRING(50),
         allowNull: false,
+        unique: true,
       },
       email: {
         type: Sequelize.STRING(100),
         allowNull: false,
+        unique: true,
       },
       password: {
         type: Sequelize.STRING(100),
@@ -198,8 +293,24 @@ module.exports = {
       role: {
         type: Sequelize.STRING(20),
         allowNull: false,
+        defaultValue: 'user',
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
+      },
+      updated_at: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('NOW'),
       },
     });
+
+    // Добавляем индексы для улучшения производительности
+    await queryInterface.addIndex('Messages', ['user_id']);
+    await queryInterface.addIndex('Orders', ['customer_id']);
+    await queryInterface.addIndex('Payments', ['order_id']);
+    await queryInterface.addIndex('Verifications', ['user_id']);
+    await queryInterface.addIndex('Auths', ['email']);
   },
 
   down: async (queryInterface, Sequelize) => {
