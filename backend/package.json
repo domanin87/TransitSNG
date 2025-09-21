@@ -40,7 +40,8 @@
     "express-validator": "^7.0.1",
     "compression": "^1.7.4",
     "moment": "^2.29.4",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
