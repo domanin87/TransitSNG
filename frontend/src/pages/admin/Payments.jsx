@@ -1,152 +1,173 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { paymentsAPI } from '../../index';
 
-const Payments = ({ userRole }) => {
-  const [payments, setPayments] = useState([
-    {
-      id: 5001,
-      orderId: 1001,
-      user: 'Иван Иванов',
-      amount: '120 000 ₸',
-      method: 'Карта',
-      status: 'completed',
-      date: '2023-10-15',
-      commission: '6 000 ₸'
-    },
-    {
-      id: 5002,
-      orderId: 1002,
-      user: 'Петр Петров',
-      amount: '150 000 ₸',
-      method: 'Перевод',
-      status: 'pending',
-      date: '2023-10-16',
-      commission: '7 500 ₸'
-    },
-    {
-      id: 5003,
-      orderId: 1003,
-      user: 'Сергей Сергеев',
-      amount: '80 000 ₸',
-      method: 'Карта',
-      status: 'completed',
-      date: '2023-10-14',
-      commission: '4 000 ₸'
-    },
-  ]);
+export default function Payments({ userRole }) {
+  const { t } = useTranslation();
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [newPayment, setNewPayment] = useState({ orderId: '', amount: '', method: '', status: 'pending' });
+  const [totalAmount, setTotalAmount] = useState(0);
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed': return '#4ade80';
-      case 'pending': return '#fbbf24';
-      case 'failed': return '#f87171';
-      default: return '#6b7280';
+  const canEdit = ['superadmin', 'admin', 'moderator'].includes(userRole);
+
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      const data = await paymentsAPI.getAll();
+      setPayments(data);
+      setTotalAmount(data.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusText = (status) => {
-    switch(status) {
-      case 'completed': return 'Завершен';
-      case 'pending': return 'Ожидание';
-      case 'failed': return 'Ошибка';
-      default: return 'Неизвестно';
+  const addPayment = async () => {
+    if (!canEdit) return;
+    try {
+      const data = await paymentsAPI.create(newPayment);
+      setPayments([...payments, data]);
+      setNewPayment({ orderId: '', amount: '', method: '', status: 'pending' });
+      setTotalAmount(totalAmount + parseFloat(data.amount || 0));
+    } catch (err) {
+      setError(err.message);
     }
   };
 
-  const totalRevenue = payments
-    .filter(p => p.status === 'completed')
-    .reduce((sum, payment) => {
-      const commissionValue = payment.commission ? parseInt(payment.commission.replace(/\s|₸/g, ''), 10) : 0;
-      return sum + (isNaN(commissionValue) ? 0 : commissionValue);
-    }, 0);
+  const updatePayment = async (id, updatedData) => {
+    if (!canEdit) return;
+    try {
+      const data = await paymentsAPI.update(id, updatedData);
+      setPayments(payments.map((payment) => (payment.id === id ? data : payment)));
+      setEditingPayment(null);
+      setTotalAmount(payments.reduce((sum, payment) => sum + parseFloat(payment.id === id ? data.amount : payment.amount || 0), 0));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const deletePayment = async (id) => {
+    if (!canEdit) return;
+    try {
+      await paymentsAPI.delete(id);
+      const deletedPayment = payments.find((p) => p.id === id);
+      setPayments(payments.filter((payment) => payment.id !== id));
+      setTotalAmount(totalAmount - parseFloat(deletedPayment.amount || 0));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>Платежи</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <select className="input" style={{ width: '200px' }}>
-            <option value="all">Все статусы</option>
-            <option value="completed">Завершенные</option>
-            <option value="pending">Ожидающие</option>
-            <option value="failed">Ошибки</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Поиск платежей..."
-            className="input"
-            style={{ width: '250px' }}
-          />
-          <button className="btn">Экспорт</button>
-        </div>
+      <h2 className="text-2xl mb-4">{t('payments')}</h2>
+      <div className="mb-4">
+        <p className="text-lg">{t('total_amount')}: {totalAmount.toFixed(2)} USD</p>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginBottom: 20 }}>
-        <div className="card">
-          <h3>Общий доход</h3>
-          <p style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--accent)' }}>
-            {totalRevenue.toLocaleString('ru-RU')} ₸
-          </p>
+      {canEdit && (
+        <div className="card mb-5">
+          <h3 className="text-lg mb-2">{t('add_payment')}</h3>
+          <div className="grid gap-2">
+            <input
+              className="input"
+              placeholder={t('order_id')}
+              value={newPayment.orderId}
+              onChange={(e) => setNewPayment({ ...newPayment, orderId: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder={t('amount')}
+              type="number"
+              value={newPayment.amount}
+              onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder={t('method')}
+              value={newPayment.method}
+              onChange={(e) => setNewPayment({ ...newPayment, method: e.target.value })}
+            />
+            <button className="btn" onClick={addPayment}>{t('add')}</button>
+          </div>
         </div>
-        <div className="card">
-          <h3>Всего платежей</h3>
-          <p style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--accent)' }}>{payments.length}</p>
-        </div>
-        <div className="card">
-          <h3>Завершенные</h3>
-          <p style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--accent)' }}>
-            {payments.filter(p => p.status === 'completed').length}
-          </p>
-        </div>
-        <div className="card">
-          <h3>Ожидающие</h3>
-          <p style={{ fontSize: 24, fontWeight: 'bold', color: 'var(--accent)' }}>
-            {payments.filter(p => p.status === 'pending').length}
-          </p>
-        </div>
-      </div>
-
-      <div className="card">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #e6eef6' }}>
-              <th style={{ textAlign: 'left', padding: '12px' }}>ID</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>ID заказа</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Пользователь</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Сумма</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Комиссия</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Метод</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Статус</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Дата</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map(payment => (
-              <tr key={payment.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                <td style={{ padding: '12px' }}>#{payment.id}</td>
-                <td style={{ padding: '12px' }}>#{payment.orderId}</td>
-                <td style={{ padding: '12px' }}>{payment.user}</td>
-                <td style={{ padding: '12px', fontWeight: 'bold' }}>{payment.amount}</td>
-                <td style={{ padding: '12px', color: '#6b7280' }}>{payment.commission}</td>
-                <td style={{ padding: '12px' }}>{payment.method}</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    background: getStatusColor(payment.status),
-                    color: 'white'
-                  }}>
-                    {getStatusText(payment.status)}
-                  </span>
+      )}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left p-3">{t('id')}</th>
+            <th className="text-left p-3">{t('order_id')}</th>
+            <th className="text-left p-3">{t('amount')}</th>
+            <th className="text-left p-3">{t('method')}</th>
+            <th className="text-left p-3">{t('status')}</th>
+            {canEdit && <th className="text-left p-3">{t('actions')}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {payments.map((payment) => (
+            <tr key={payment.id} className="border-b border-gray-200">
+              <td className="p-3">{payment.id}</td>
+              <td className="p-3">
+                {editingPayment === payment.id ? (
+                  <input
+                    className="input"
+                    value={payment.order_id}
+                    onChange={(e) => updatePayment(payment.id, { ...payment, order_id: e.target.value })}
+                  />
+                ) : (
+                  payment.order_id
+                )}
+              </td>
+              <td className="p-3">
+                {editingPayment === payment.id ? (
+                  <input
+                    className="input"
+                    value={payment.amount}
+                    type="number"
+                    onChange={(e) => updatePayment(payment.id, { ...payment, amount: e.target.value })}
+                  />
+                ) : (
+                  payment.amount
+                )}
+              </td>
+              <td className="p-3">
+                {editingPayment === payment.id ? (
+                  <input
+                    className="input"
+                    value={payment.method}
+                    onChange={(e) => updatePayment(payment.id, { ...payment, method: e.target.value })}
+                  />
+                ) : (
+                  payment.method
+                )}
+              </td>
+              <td className="p-3">{payment.status}</td>
+              {canEdit && (
+                <td className="p-3">
+                  {editingPayment === payment.id ? (
+                    <button className="btn small" onClick={() => setEditingPayment(null)}>{t('save')}</button>
+                  ) : (
+                    <>
+                      <button className="btn small mr-2" onClick={() => setEditingPayment(payment.id)}>{t('edit')}</button>
+                      <button className="btn small red" onClick={() => deletePayment(payment.id)}>{t('delete')}</button>
+                    </>
+                  )}
                 </td>
-                <td style={{ padding: '12px' }}>{payment.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-};
-
-export default Payments;
+}

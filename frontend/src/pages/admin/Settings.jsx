@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { settingsAPI } from '../../api';
+import { useTranslation } from 'react-i18next';
+import { settingsAPI } from '../../index';
 
-const Settings = ({ userRole }) => {
-  const [settings, setSettings] = useState({
-    siteName: '',
-    adminEmail: '',
-    supportEmail: '',
-    defaultLanguage: 'ru',
-    trialPeriod: 14,
-    commissionRate: 5,
-    currency: '₸',
-    smsNotifications: true,
-    emailNotifications: true
-  });
+export default function Settings({ userRole }) {
+  const { t } = useTranslation();
+  const [settings, setSettings] = useState({ siteName: '', contactEmail: '', maintenanceMode: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,210 +26,52 @@ const Settings = ({ userRole }) => {
     }
   };
 
-  const saveSettings = async () => {
+  const updateSettings = async () => {
+    if (!isSuperAdmin) return;
     try {
       await settingsAPI.update(settings);
-      alert('Настройки сохранены!');
+      alert(t('settings_updated'));
     } catch (err) {
       setError(err.message);
     }
   };
 
-  if (!isSuperAdmin) {
-    return (
-      <div>
-        <h2>Настройки</h2>
-        <div className="card">
-          <p>У вас нет прав для доступа к этому разделу.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) return <div>Загрузка...</div>;
-  if (error) return <div>Ошибка: {error}</div>;
+  if (!isSuperAdmin) return <div>{t('access_denied')}</div>;
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div>
-      <h2>Настройки системы</h2>
-
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3>Основные настройки</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <div>
-            <label>Название сайта</label>
-            <input 
-              type="text" 
-              value={settings.siteName} 
-              onChange={(e) => setSettings({...settings, siteName: e.target.value})} 
-              className="input" 
-            />
-          </div>
-          <div>
-            <label>Email администратора</label>
-            <input 
-              type="email" 
-              value={settings.adminEmail} 
-              onChange={(e) => setSettings({...settings, adminEmail: e.target.value})} 
-              className="input" 
-            />
-          </div>
-          <div>
-            <label>Email поддержки</label>
-            <input 
-              type="email" 
-              value={settings.supportEmail} 
-              onChange={(e) => setSettings({...settings, supportEmail: e.target.value})} 
-              className="input" 
-            />
-          </div>
-          <div>
-            <label>Язык по умолчанию</label>
-            <select 
-              value={settings.defaultLanguage} 
-              onChange={(e) => setSettings({...settings, defaultLanguage: e.target.value})} 
-              className="input"
-            >
-              <option value="ru">Русский</option>
-              <option value="kk">Казахский</option>
-              <option value="en">Английский</option>
-            </select>
-          </div>
-          <div>
-            <label>Пробный период (дней)</label>
-            <input 
-              type="number" 
-              value={settings.trialPeriod} 
-              onChange={(e) => setSettings({...settings, trialPeriod: parseInt(e.target.value)})} 
-              className="input" 
-            />
-          </div>
-          <div>
-            <label>Комиссия платформы (%)</label>
-            <input 
-              type="number" 
-              value={settings.commissionRate} 
-              onChange={(e) => setSettings({...settings, commissionRate: parseInt(e.target.value)})} 
-              className="input" 
-            />
-          </div>
-          <div>
-            <label>Валюта</label>
-            <select 
-              value={settings.currency} 
-              onChange={(e) => setSettings({...settings, currency: e.target.value})} 
-              className="input"
-            >
-              <option value="₸">Тенге (₸)</option>
-              <option value="₽">Рубль (₽)</option>
-              <option value="$">Доллар ($)</option>
-              <option value="€">Евро (€)</option>
-            </select>
-          </div>
+      <h2 className="text-2xl mb-4">{t('settings')}</h2>
+      <div className="card max-w-lg">
+        <div className="mb-4">
+          <label className="block mb-1">{t('site_name')}</label>
+          <input
+            className="input"
+            value={settings.siteName}
+            onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+          />
         </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3>Уведомления</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h4>SMS уведомления</h4>
-              <p style={{ fontSize: '14px', color: '#6b7280' }}>Включить отправку SMS уведомлений пользователям</p>
-            </div>
-            <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '24px' }}>
-              <input 
-                type="checkbox" 
-                checked={settings.smsNotifications} 
-                onChange={(e) => setSettings({...settings, smsNotifications: e.target.checked})} 
-                style={{ opacity: 0, width: 0, height: 0 }}
-              />
-              <span style={{
-                position: 'absolute',
-                cursor: 'pointer',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: settings.smsNotifications ? '#4ade80' : '#ccc',
-                transition: '.4s',
-                borderRadius: '24px'
-              }}>
-                <span style={{
-                  position: 'absolute',
-                  content: '',
-                  height: '18px',
-                  width: '18px',
-                  left: settings.smsNotifications ? '26px' : '3px',
-                  bottom: '3px',
-                  backgroundColor: 'white',
-                  transition: '.4s',
-                  borderRadius: '50%'
-                }} />
-              </span>
-            </label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h4>Email уведомления</h4>
-              <p style={{ fontSize: '14px', color: '#6b7280' }}>Включить отправку email уведомлений пользователям</p>
-            </div>
-            <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '24px' }}>
-              <input 
-                type="checkbox" 
-                checked={settings.emailNotifications} 
-                onChange={(e) => setSettings({...settings, emailNotifications: e.target.checked})} 
-                style={{ opacity: 0, width: 0, height: 0 }}
-              />
-              <span style={{
-                position: 'absolute',
-                cursor: 'pointer',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: settings.emailNotifications ? '#4ade80' : '#ccc',
-                transition: '.4s',
-                borderRadius: '24px'
-              }}>
-                <span style={{
-                  position: 'absolute',
-                  content: '',
-                  height: '18px',
-                  width: '18px',
-                  left: settings.emailNotifications ? '26px' : '3px',
-                  bottom: '3px',
-                  backgroundColor: 'white',
-                  transition: '.4s',
-                  borderRadius: '50%'
-                }} />
-              </span>
-            </label>
-          </div>
+        <div className="mb-4">
+          <label className="block mb-1">{t('contact_email')}</label>
+          <input
+            className="input"
+            value={settings.contactEmail}
+            onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+          />
         </div>
-      </div>
-
-      <div style={{ textAlign: 'right', marginBottom: 20 }}>
-        <button className="btn" onClick={saveSettings}>Сохранить настройки</button>
-      </div>
-
-      <div className="card">
-        <h3>Опасная зона</h3>
-        <p style={{ marginBottom: '15px', color: '#6b7280' }}>Эти действия не могут быть отменены. Будьте осторожны.</p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ padding: '10px 15px', background: '#f87171', color: 'white', border: 'none', borderRadius: '6px' }}>
-            Очистить кеш
-          </button>
-          <button style={{ padding: '10px 15px', background: '#f87171', color: 'white', border: 'none', borderRadius: '6px' }}>
-            Экспорт данных
-          </button>
-          <button style={{ padding: '10px 15px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px' }}>
-            Удалить все данные
-          </button>
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={settings.maintenanceMode}
+              onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
+            />
+            <span className="ml-2">{t('maintenance_mode')}</span>
+          </label>
         </div>
+        <button className="btn" onClick={updateSettings}>{t('save')}</button>
       </div>
     </div>
   );
-};
-
-export default Settings;
+}

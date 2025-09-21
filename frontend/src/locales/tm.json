@@ -10,5 +10,42 @@
   "map": "Kart",
   "chat": "Çet",
   "admin": "Admin",
-  "contacts_hidden": "Habarlar gizlin — görmek üçin giriň"
+  "contacts_hidden": "Habarlar gizlin — görmek üçin giriň",
+  "news": {
+    "new_service": "Täze hyzmat",
+    "new_service_content": "Biz GDA şäherlerinde ekspress ýetirişligi başladyk.",
+    "tariff_update": "Tarif täzelenmesi",
+    "tariff_update_content": "Halkara ýük daşamak üçin täze tarifler."
+  },
+  "vacancies": {
+    "driver": "Ýük awtoulagynyň sürüjisi",
+    "driver_desc": "Tejribeli sürüji talap edilýär.",
+    "manager": "Logistika dolandyryjysy",
+    "manager_desc": "Ýük daşamak tertibi."
+  },
+  "join_community": "Jemgyýetimize goşulyň!",
+  "join_community_desc": "Platformanyň ähli mümkinçiliklerinden peýdalanmak üçin hasaba alyň",
+  "logout": "Çykmak",
+  "loading": "Ýüklenýär...",
+  "error": "Ýalňyşlyk",
+  "verifications": "Barlaglar",
+  "id": "ID",
+  "driver_id": "Sürüji ID",
+  "document": "Resminama",
+  "status": "Status",
+  "actions": "Hereketler",
+  "approve": "Tassyklamak",
+  "reject": "Ret etmek",
+  "settings": "Sazlamalar",
+  "site_name": "Saýtyň ady",
+  "contact_email": "Habarlaşyk emaili",
+  "maintenance_mode": "Tehniki hyzmat re modeimi",
+  "save": "Ýatda saklamak",
+  "access_denied": "Giriş gadagan",
+  "add_tariff": "Tarif goşmak",
+  "price_per_km": "Km üçin bahasy (USD)",
+  "min_price": "Iň pes bahasy (USD)",
+  "add": "Goşmak",
+  "edit": "Üýtgetmek",
+  "delete": "Öçürmek"
 }

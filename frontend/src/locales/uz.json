@@ -10,5 +10,42 @@
   "map": "Xarita",
   "chat": "Chat",
   "admin": "Admin",
-  "contacts_hidden": "Kontaktlar yashirin — ko'rish uchun kiring"
+  "contacts_hidden": "Kontaktlar yashirin — ko'rish uchun kiring",
+  "news": {
+    "new_service": "Yangi xizmat",
+    "new_service_content": "Biz MDH shaharlari bo'ylab ekspress yetkazib berishni ishga tushirdik.",
+    "tariff_update": "Tariflar yangilanishi",
+    "tariff_update_content": "Xalqaro tashish uchun yangi tariflar."
+  },
+  "vacancies": {
+    "driver": "Yuk mashinasi haydovchisi",
+    "driver_desc": "Tajribali haydovchi talab qilinadi.",
+    "manager": "Logistika menejeri",
+    "manager_desc": "Tashishni tashkil qilish."
+  },
+  "join_community": "Jamoamizga qo'shiling!",
+  "join_community_desc": "Platformaning barcha imkoniyatlaridan foydalanish uchun ro'yxatdan o'ting",
+  "logout": "Chiqish",
+  "loading": "Yuklanmoqda...",
+  "error": "Xato",
+  "verifications": "Verifikatsiyalar",
+  "id": "ID",
+  "driver_id": "Haydovchi ID",
+  "document": "Hujjat",
+  "status": "Status",
+  "actions": "Harakatlar",
+  "approve": "Tasdiqlash",
+  "reject": "Rad etish",
+  "settings": "Sozlamalar",
+  "site_name": "Sayt nomi",
+  "contact_email": "Aloqa emaili",
+  "maintenance_mode": "Texnik xizmat ko'rsatish rejimi",
+  "save": "Saqlash",
+  "access_denied": "Kirish taqiqlangan",
+  "add_tariff": "Tarif qo'shish",
+  "price_per_km": "Km uchun narx (USD)",
+  "min_price": "Minimal narx (USD)",
+  "add": "Qo'shish",
+  "edit": "Tahrirlash",
+  "delete": "O'chirish"
 }

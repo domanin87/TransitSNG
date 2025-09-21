@@ -10,5 +10,42 @@
   "map": "Xəritə",
   "chat": "Çat",
   "admin": "Admin",
-  "contacts_hidden": "Əlaqələr gizlidir — görünməsi üçün daxil olun"
+  "contacts_hidden": "Əlaqələr gizlidir — görünməsi üçün daxil olun",
+  "news": {
+    "new_service": "Yeni xidmət",
+    "new_service_content": "Biz MDB şəhərləri üzrə ekspress çatdırılma başlatdıq.",
+    "tariff_update": "Tariflərin yenilənməsi",
+    "tariff_update_content": "Beynəlxalq daşımalar üçün yeni tariflər."
+  },
+  "vacancies": {
+    "driver": "Yük maşını sürücüsü",
+    "driver_desc": "Təcrübəli sürücü tələb olunur.",
+    "manager": "Logistika meneceri",
+    "manager_desc": "Daşımaların təşkili."
+  },
+  "join_community": "Cəmiyyətimizə qoşulun!",
+  "join_community_desc": "Platformanın bütün imkanlarından istifadə etmək üçün qeydiyyatdan keçin",
+  "logout": "Çıxış",
+  "loading": "Yüklənir...",
+  "error": "Xəta",
+  "verifications": "Təsdiqlər",
+  "id": "ID",
+  "driver_id": "Sürücü ID",
+  "document": "Sənəd",
+  "status": "Status",
+  "actions": "Hərəkətlər",
+  "approve": "Təsdiqlə",
+  "reject": "Rədd et",
+  "settings": "Tənzimləmələr",
+  "site_name": "Saytın adı",
+  "contact_email": "Əlaqə emaili",
+  "maintenance_mode": "Texniki xidmət rejimi",
+  "save": "Saxla",
+  "access_denied": "Giriş qadağandır",
+  "add_tariff": "Tarif əlavə et",
+  "price_per_km": "Km başına qiymət (USD)",
+  "min_price": "Minimal qiymət (USD)",
+  "add": "Əlavə et",
+  "edit": "Redaktə et",
+  "delete": "Sil"
 }

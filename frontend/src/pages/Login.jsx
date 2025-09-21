@@ -1,80 +1,49 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { authAPI } from '../api'
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../index';
 
 export default function Login({ setUser }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
-  const [error, setError] = useState('')
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setError('')
-
+  const handleLogin = async () => {
     try {
-      const response = await authAPI.login({ email, password })
-      
-      localStorage.setItem('user', JSON.stringify(response.user))
-      localStorage.setItem('token', response.token)
-      setUser(response.user)
-      
-      alert('Вход выполнен')
-      window.location.href = '#/'
+      const { user, token } = await authAPI.login({ email, password });
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token', token);
+      setUser(user);
+      navigate('/');
     } catch (err) {
-      setError('Неверные учетные данные')
+      setError(err.message);
     }
-  }
+  };
 
   return (
-    <div className='container'>
-      <h2>Вход</h2>
-      <div style={{ maxWidth: 420 }} className='card'>
-        {error && <div style={{ color: 'red', marginBottom: 15 }}>{error}</div>}
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: 15 }}>
-            <input
-              className='input'
-              placeholder='Email или телефон'
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div style={{ marginBottom: 15 }}>
-            <input
-              className='input'
-              placeholder='Пароль'
-              type='password'
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-            <input
-              type="checkbox"
-              id="remember"
-              checked={rememberMe}
-              onChange={() => setRememberMe(!rememberMe)}
-              style={{ marginRight: 8 }}
-            />
-            <label htmlFor="remember">Запомнить меня</label>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <button type="submit" className="btn">Войти</button>
-          </div>
-        </form>
-
-        <div style={{ marginTop: 20, textAlign: 'center' }}>
-          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
-        </div>
-
-        <div style={{ marginTop: 15, padding: 15, background: '#f5f5f5', borderRadius: 8, fontSize: 14 }}>
-          <strong>Тестовые данные:</strong>
-          <div>Суперадмин: adomanin87 / 558554T</div>
+    <div className="container max-w-md">
+      <h2 className="text-2xl mb-4">{t('login')}</h2>
+      <div className="card">
+        {error && <div className="text-red-500 mb-4">{t('error')}: {error}</div>}
+        <div className="grid gap-2">
+          <input
+            className="input"
+            placeholder={t('email_or_phone')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className="input"
+            type="password"
+            placeholder={t('password')}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="btn" onClick={handleLogin}>{t('login')}</button>
         </div>
       </div>
     </div>
-  )
+  );
 }

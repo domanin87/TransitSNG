@@ -10,5 +10,42 @@
   "map": "Hartă",
   "chat": "Chat",
   "admin": "Admin",
-  "contacts_hidden": "Contactele sunt ascunse — autentificați-vă"
+  "contacts_hidden": "Contactele sunt ascunse — autentificați-vă",
+  "news": {
+    "new_service": "Serviciu nou",
+    "new_service_content": "Am lansat livrarea expres în orașele CSI.",
+    "tariff_update": "Actualizarea tarifelor",
+    "tariff_update_content": "Tarife noi pentru transport internațional."
+  },
+  "vacancies": {
+    "driver": "Șofer de camion",
+    "driver_desc": "Este necesar un șofer cu experiență.",
+    "manager": "Manager logistică",
+    "manager_desc": "Organizarea transporturilor."
+  },
+  "join_community": "Alăturați-vă comunității noastre!",
+  "join_community_desc": "Înregistrați-vă pentru a accesa toate funcționalitățile platformei",
+  "logout": "Deconectare",
+  "loading": "Se încarcă...",
+  "error": "Eroare",
+  "verifications": "Verificări",
+  "id": "ID",
+  "driver_id": "ID șofer",
+  "document": "Document",
+  "status": "Statut",
+  "actions": "Acțiuni",
+  "approve": "Aproba",
+  "reject": "Respinge",
+  "settings": "Setări",
+  "site_name": "Numele site-ului",
+  "contact_email": "Email de contact",
+  "maintenance_mode": "Mod de întreținere",
+  "save": "Salvează",
+  "access_denied": "Acces interzis",
+  "add_tariff": "Adăugați tarif",
+  "price_per_km": "Preț pe km (USD)",
+  "min_price": "Preț minim (USD)",
+  "add": "Adăugați",
+  "edit": "Editați",
+  "delete": "Ștergeți"
 }

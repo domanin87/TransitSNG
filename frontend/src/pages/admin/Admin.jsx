@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import AdminSidebar from '../../components/AdminSidebar';
-import Dashboard from './Dashboard';
 import Users from './Users';
 import Drivers from './Drivers';
 import Orders from './Orders';
@@ -11,25 +10,15 @@ import Tariffs from './Tariffs';
 import Verifications from './Verifications';
 import Settings from './Settings';
 
-const Admin = () => {
-  const [userRole, setUserRole] = useState('moderator');
-
-  useEffect(() => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      setUserRole(userData.role || 'moderator');
-    } catch (err) {
-      console.error('Ошибка парсинга user из localStorage:', err);
-      setUserRole('moderator');
-    }
-  }, []);
+export default function Admin({ user }) {
+  const userRole = user?.role || 'moderator';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container flex">
       <AdminSidebar userRole={userRole} />
-      <div style={{ marginLeft: 250, padding: '20px', width: 'calc(100% - 250px)' }}>
+      <div style={{ marginLeft: 250, padding: 20, flex: 1 }}>
         <Routes>
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<div>Дашборд (в разработке)</div>} />
           <Route path="users" element={<Users userRole={userRole} />} />
           <Route path="drivers" element={<Drivers userRole={userRole} />} />
           <Route path="orders" element={<Orders userRole={userRole} />} />
@@ -38,10 +27,9 @@ const Admin = () => {
           <Route path="tariffs" element={<Tariffs userRole={userRole} />} />
           <Route path="verifications" element={<Verifications userRole={userRole} />} />
           <Route path="settings" element={<Settings userRole={userRole} />} />
+          <Route path="*" element={<div>Выберите раздел</div>} />
         </Routes>
       </div>
     </div>
   );
-};
-
-export default Admin;
+}

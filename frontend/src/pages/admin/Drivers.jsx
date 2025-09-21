@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { driversAPI } from '../../api';
+import { useTranslation } from 'react-i18next';
+import { driversAPI } from '../../index';
 
-const Drivers = ({ userRole }) => {
+export default function Drivers({ userRole }) {
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingDriver, setEditingDriver] = useState(null);
+  const [newDriver, setNewDriver] = useState({ userId: '', license: '', vehicleType: '', status: 'pending' });
 
-  const canEdit = ['superadmin', 'admin', 'moderator'].includes(userRole);
+  const canEdit = ['superadmin', 'admin'].includes(userRole);
+  const canVerify = ['superadmin', 'admin', 'moderator'].includes(userRole);
 
   useEffect(() => {
     loadDrivers();
@@ -24,145 +29,165 @@ const Drivers = ({ userRole }) => {
     }
   };
 
+  const addDriver = async () => {
+    if (!canEdit) return;
+    try {
+      const data = await driversAPI.create(newDriver);
+      setDrivers([...drivers, data]);
+      setNewDriver({ userId: '', license: '', vehicleType: '', status: 'pending' });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const updateDriver = async (id, updatedData) => {
+    if (!canEdit) return;
+    try {
+      const data = await driversAPI.update(id, updatedData);
+      setDrivers(drivers.map((driver) => (driver.id === id ? data : driver)));
+      setEditingDriver(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const deleteDriver = async (id) => {
+    if (!canEdit) return;
+    try {
+      await driversAPI.delete(id);
+      setDrivers(drivers.filter((driver) => driver.id !== id));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const verifyDriver = async (id) => {
+    if (!canVerify) return;
     try {
       await driversAPI.verify(id);
-      setDrivers(drivers.map(driver =>
-        driver.id === id ? { ...driver, verification: 'approved', status: 'active' } : driver
-      ));
+      loadDrivers();
     } catch (err) {
       setError(err.message);
     }
   };
 
   const rejectDriver = async (id) => {
+    if (!canVerify) return;
     try {
       await driversAPI.reject(id);
-      setDrivers(drivers.map(driver =>
-        driver.id === id ? { ...driver, verification: 'rejected' } : driver
-      ));
+      loadDrivers();
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const blockDriver = async (id) => {
-    try {
-      await driversAPI.update(id, { status: 'blocked' });
-      setDrivers(drivers.map(driver =>
-        driver.id === id ? { ...driver, status: 'blocked' } : driver
-      ));
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  if (loading) return <div>Загрузка...</div>;
-  if (error) return <div>Ошибка: {error}</div>;
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>Водители</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            placeholder="Поиск водителей..."
-            className="input"
-            style={{ width: '250px' }}
-          />
-          <button className="btn">Экспорт</button>
+      <h2 className="text-2xl mb-4">{t('drivers')}</h2>
+      {canEdit && (
+        <div className="card mb-5">
+          <h3 className="text-lg mb-2">{t('add_driver')}</h3>
+          <div className="grid gap-2">
+            <input
+              className="input"
+              placeholder={t('user_id')}
+              value={newDriver.userId}
+              onChange={(e) => setNewDriver({ ...newDriver, userId: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder={t('license')}
+              value={newDriver.license}
+              onChange={(e) => setNewDriver({ ...newDriver, license: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder={t('vehicle_type')}
+              value={newDriver.vehicleType}
+              onChange={(e) => setNewDriver({ ...newDriver, vehicleType: e.target.value })}
+            />
+            <button className="btn" onClick={addDriver}>{t('add')}</button>
+          </div>
         </div>
-      </div>
-
-      <div className="card">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #e6eef6' }}>
-              <th style={{ textAlign: 'left', padding: '12px' }}>ID</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Имя</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Контакты</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Водительское удостоверение</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Тип автомобиля</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Рейтинг</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Статус</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Верификация</th>
-              {canEdit && <th style={{ textAlign: 'left', padding: '12px' }}>Действия</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map(driver => (
-              <tr key={driver.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                <td style={{ padding: '12px' }}>{driver.id}</td>
-                <td style={{ padding: '12px' }}>{driver.name}</td>
-                <td style={{ padding: '12px' }}>
-                  <div>{driver.email}</div>
-                  <div>{driver.phone}</div>
-                </td>
-                <td style={{ padding: '12px' }}>{driver.license}</td>
-                <td style={{ padding: '12px' }}>{driver.truckType}</td>
-                <td style={{ padding: '12px' }}>⭐ {driver.rating}</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    background: driver.status === 'active' ? '#4ade80' : 
-                               driver.status === 'pending' ? '#fbbf24' : '#f87171',
-                    color: 'white'
-                  }}>
-                    {driver.status === 'active' ? 'Активен' : 
-                     driver.status === 'pending' ? 'Ожидание' : 'Заблокирован'}
-                  </span>
-                </td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    background: driver.verification === 'approved' ? '#4ade80' : 
-                               driver.verification === 'pending' ? '#fbbf24' : '#f87171',
-                    color: 'white'
-                  }}>
-                    {driver.verification === 'approved' ? 'Подтвержден' : 
-                     driver.verification === 'pending' ? 'Ожидание' : 'Отклонен'}
-                  </span>
-                </td>
-                {canEdit && (
-                  <td style={{ padding: '12px' }}>
-                    {driver.verification === 'pending' && (
-                      <>
-                        <button 
-                          style={{ marginRight: '8px', padding: '6px 12px', background: '#4ade80', color: 'white', border: 'none', borderRadius: '4px', fontSize: '12px' }}
-                          onClick={() => verifyDriver(driver.id)}
-                        >
-                          Одобрить
-                        </button>
-                        <button 
-                          style={{ marginRight: '8px', padding: '6px 12px', background: '#f87171', color: 'white', border: 'none', borderRadius: '4px', fontSize: '12px' }}
-                          onClick={() => rejectDriver(driver.id)}
-                        >
-                          Отклонить
-                        </button>
-                      </>
-                    )}
-                    {driver.status === 'active' && (
-                      <button 
-                        style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '12px' }}
-                        onClick={() => blockDriver(driver.id)}
-                      >
-                        Заблокировать
-                      </button>
-                    )}
-                  </td>
+      )}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left p-3">{t('id')}</th>
+            <th className="text-left p-3">{t('user_id')}</th>
+            <th className="text-left p-3">{t('license')}</th>
+            <th className="text-left p-3">{t('vehicle_type')}</th>
+            <th className="text-left p-3">{t('status')}</th>
+            {(canEdit || canVerify) && <th className="text-left p-3">{t('actions')}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {drivers.map((driver) => (
+            <tr key={driver.id} className="border-b border-gray-200">
+              <td className="p-3">{driver.id}</td>
+              <td className="p-3">
+                {editingDriver === driver.id ? (
+                  <input
+                    className="input"
+                    value={driver.user_id}
+                    onChange={(e) => updateDriver(driver.id, { ...driver, user_id: e.target.value })}
+                  />
+                ) : (
+                  driver.user_id
                 )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </td>
+              <td className="p-3">
+                {editingDriver === driver.id ? (
+                  <input
+                    className="input"
+                    value={driver.license}
+                    onChange={(e) => updateDriver(driver.id, { ...driver, license: e.target.value })}
+                  />
+                ) : (
+                  driver.license
+                )}
+              </td>
+              <td className="p-3">
+                {editingDriver === driver.id ? (
+                  <input
+                    className="input"
+                    value={driver.vehicle_type}
+                    onChange={(e) => updateDriver(driver.id, { ...driver, vehicle_type: e.target.value })}
+                  />
+                ) : (
+                  driver.vehicle_type
+                )}
+              </td>
+              <td className="p-3">{driver.status}</td>
+              {(canEdit || canVerify) && (
+                <td className="p-3">
+                  {editingDriver === driver.id ? (
+                    <button className="btn small" onClick={() => setEditingDriver(null)}>{t('save')}</button>
+                  ) : (
+                    <>
+                      {canEdit && (
+                        <>
+                          <button className="btn small mr-2" onClick={() => setEditingDriver(driver.id)}>{t('edit')}</button>
+                          <button className="btn small red" onClick={() => deleteDriver(driver.id)}>{t('delete')}</button>
+                        </>
+                      )}
+                      {canVerify && (
+                        <>
+                          <button className="btn small mr-2" onClick={() => verifyDriver(driver.id)}>{t('approve')}</button>
+                          <button className="btn small red" onClick={() => rejectDriver(driver.id)}>{t('reject')}</button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-};
-
-export default Drivers;
+}
