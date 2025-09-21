@@ -22,9 +22,7 @@ fs
       file.indexOf('.') !== 0 &&
       file !== basename &&
       file.slice(-3) === '.js' &&
-      // Исключаем файлы, которые не являются моделями Sequelize
-      !file.includes('.test.js') &&
-      !file.includes('.spec.js')
+      file.indexOf('.test.js') === -1
     );
   })
   .forEach(file => {
@@ -33,6 +31,7 @@ fs
       db[model.name] = model;
     } catch (error) {
       console.error(`Error loading model from file ${file}:`, error.message);
+      // Пропускаем файлы с ошибками, но не прерываем загрузку
     }
   });
 
