@@ -7,9 +7,9 @@ export default function Payments({ userRole }) {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPayments, setSelectedPayments] = useState([]);
   const [editingPayment, setEditingPayment] = useState(null);
-  const [newPayment, setNewPayment] = useState({ orderId: '', amount: '', method: '', status: 'pending' });
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [newPayment, setNewPayment] = useState({ orderId: '', amount: '', status: 'pending', method: '' });
 
   const canEdit = ['superadmin', 'admin', 'moderator'].includes(userRole);
 
@@ -22,7 +22,6 @@ export default function Payments({ userRole }) {
       setLoading(true);
       const data = await paymentsAPI.getAll();
       setPayments(data);
-      setTotalAmount(data.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -35,8 +34,7 @@ export default function Payments({ userRole }) {
     try {
       const data = await paymentsAPI.create(newPayment);
       setPayments([...payments, data]);
-      setNewPayment({ orderId: '', amount: '', method: '', status: 'pending' });
-      setTotalAmount(totalAmount + parseFloat(data.amount || 0));
+      setNewPayment({ orderId: '', amount: '', status: 'pending', method: '' });
     } catch (err) {
       setError(err.message);
     }
@@ -48,7 +46,6 @@ export default function Payments({ userRole }) {
       const data = await paymentsAPI.update(id, updatedData);
       setPayments(payments.map((payment) => (payment.id === id ? data : payment)));
       setEditingPayment(null);
-      setTotalAmount(payments.reduce((sum, payment) => sum + parseFloat(payment.id === id ? data.amount : payment.amount || 0), 0));
     } catch (err) {
       setError(err.message);
     }
@@ -58,9 +55,7 @@ export default function Payments({ userRole }) {
     if (!canEdit) return;
     try {
       await paymentsAPI.delete(id);
-      const deletedPayment = payments.find((p) => p.id === id);
       setPayments(payments.filter((payment) => payment.id !== id));
-      setTotalAmount(totalAmount - parseFloat(deletedPayment.amount || 0));
     } catch (err) {
       setError(err.message);
     }
@@ -72,9 +67,6 @@ export default function Payments({ userRole }) {
   return (
     <div>
       <h2 className="text-2xl mb-4">{t('payments')}</h2>
-      <div className="mb-4">
-        <p className="text-lg">{t('total_amount')}: {totalAmount.toFixed(2)} USD</p>
-      </div>
       {canEdit && (
         <div className="card mb-5">
           <h3 className="text-lg mb-2">{t('add_payment')}</h3>
@@ -98,6 +90,15 @@ export default function Payments({ userRole }) {
               value={newPayment.method}
               onChange={(e) => setNewPayment({ ...newPayment, method: e.target.value })}
             />
+            <select
+              className="input"
+              value={newPayment.status}
+              onChange={(e) => setNewPayment({ ...newPayment, status: e.target.value })}
+            >
+              <option value="pending">{t('pending')}</option>
+              <option value="completed">{t('completed')}</option>
+              <option value="failed">{t('failed')}</option>
+            </select>
             <button className="btn" onClick={addPayment}>{t('add')}</button>
           </div>
         </div>
@@ -105,6 +106,13 @@ export default function Payments({ userRole }) {
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-200">
+            <th className="text-left p-3">
+              <input
+                type="checkbox"
+                onChange={(e) => setSelectedPayments(e.target.checked ? payments.map((p) => p.id) : [])}
+                checked={selectedPayments.length === payments.length && payments.length > 0}
+              />
+            </th>
             <th className="text-left p-3">{t('id')}</th>
             <th className="text-left p-3">{t('order_id')}</th>
             <th className="text-left p-3">{t('amount')}</th>
@@ -116,16 +124,29 @@ export default function Payments({ userRole }) {
         <tbody>
           {payments.map((payment) => (
             <tr key={payment.id} className="border-b border-gray-200">
+              <td className="p-3">
+                <input
+                  type="checkbox"
+                  checked={selectedPayments.includes(payment.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedPayments([...selectedPayments, payment.id]);
+                    } else {
+                      setSelectedPayments(selectedPayments.filter((id) => id !== payment.id));
+                    }
+                  }}
+                />
+              </td>
               <td className="p-3">{payment.id}</td>
               <td className="p-3">
                 {editingPayment === payment.id ? (
                   <input
                     className="input"
-                    value={payment.order_id}
-                    onChange={(e) => updatePayment(payment.id, { ...payment, order_id: e.target.value })}
+                    value={payment.orderId}
+                    onChange={(e) => updatePayment(payment.id, { ...payment, orderId: e.target.value })}
                   />
                 ) : (
-                  payment.order_id
+                  payment.orderId
                 )}
               </td>
               <td className="p-3">
@@ -151,7 +172,21 @@ export default function Payments({ userRole }) {
                   payment.method
                 )}
               </td>
-              <td className="p-3">{payment.status}</td>
+              <td className="p-3">
+                {editingPayment === payment.id ? (
+                  <select
+                    className="input"
+                    value={payment.status}
+                    onChange={(e) => updatePayment(payment.id, { ...payment, status: e.target.value })}
+                  >
+                    <option value="pending">{t('pending')}</option>
+                    <option value="completed">{t('completed')}</option>
+                    <option value="failed">{t('failed')}</option>
+                  </select>
+                ) : (
+                  payment.status
+                )}
+              </td>
               {canEdit && (
                 <td className="p-3">
                   {editingPayment === payment.id ? (
