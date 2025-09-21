@@ -31,7 +31,6 @@ fs
       db[model.name] = model;
     } catch (error) {
       console.error(`Error loading model from file ${file}:`, error.message);
-      // Пропускаем файлы с ошибками, но не прерываем загрузку
     }
   });
 
