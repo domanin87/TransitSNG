@@ -1,0 +1,68 @@
+CREATE TABLE messages (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  content TEXT NOT NULL,
+  timestamp TIMESTAMP NOT NULL
+);
+
+CREATE TABLE services (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2)
+);
+
+CREATE TABLE tariffs (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  rate DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  customer_id VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100),
+  phone VARCHAR(20)
+);
+
+CREATE TABLE drivers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  license_number VARCHAR(50)
+);
+
+CREATE TABLE payments (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER,
+  amount DECIMAL(10,2),
+  FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+CREATE TABLE customers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100),
+  phone VARCHAR(20),
+  company VARCHAR(100)
+);
+
+CREATE TABLE settings (
+  id SERIAL PRIMARY KEY,
+  site_name VARCHAR(100),
+  currency VARCHAR(10),
+  language VARCHAR(10)
+);
+
+CREATE TABLE verifications (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(50),
+  type VARCHAR(50),
+  status VARCHAR(20),
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

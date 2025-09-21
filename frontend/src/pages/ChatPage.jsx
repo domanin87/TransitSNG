@@ -1,73 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import io from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { apiRequest } from '../index';
 
-const socket = io('http://localhost:3001');
-
-export default function ChatPage() {
+export default function ChatPage({ user }) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
+    // Инициализация Socket.IO
+    const socketUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    const newSocket = io(socketUrl, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+    });
+    setSocket(newSocket);
+
+    // Загрузка сообщений
     const loadMessages = async () => {
       try {
-        const data = await apiRequest('/messages');
+        setLoading(true);
+        const data = await apiRequest('GET', '/api/messages');
         setMessages(data);
       } catch (err) {
-        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
+
     loadMessages();
 
-    socket.on('chat message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    // Обработчики Socket.IO
+    newSocket.on('connect_error', (err) => {
+      setError(`Ошибка подключения Socket.IO: ${err.message}`);
     });
 
-    return () => socket.off('chat message');
+    newSocket.on('message', (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, []);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
-    const message = { userId: user.id, username: user.name, content: newMessage, timestamp: new Date().toISOString() };
     try {
-      await apiRequest('/messages', { method: 'POST', body: message });
-      socket.emit('chat message', message);
+      const messageData = { userId: user.id, content: newMessage, timestamp: new Date().toISOString() };
+      await apiRequest('POST', '/api/messages', messageData);
+      socket.emit('message', messageData);
       setNewMessage('');
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
+
   return (
-    <div className="container">
+    <div className="flex flex-col h-screen">
       <h2 className="text-2xl mb-4">{t('chat')}</h2>
-      <div className="card">
-        <div className="h-96 overflow-auto mb-4">
-          {messages.map((msg, index) => (
-            <div key={index} className="p-2 border-b">
-              <span className="font-bold">{msg.username}: </span>
-              <span>{msg.content}</span>
-              <span className="text-xs text-muted ml-2">{new Date(msg.timestamp).toLocaleTimeString()}</span>
-            </div>
-          ))}
-        </div>
-        {user ? (
-          <div className="flex gap-2">
-            <input
-              className="input flex-1"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={t('type_message')}
-            />
-            <button className="btn" onClick={sendMessage}>{t('send')}</button>
-          </div>
-        ) : (
-          <p>{t('login_to_chat')}</p>
-        )}
-      </div>
-    </div>
-  );
-}
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map((msg, index) => (
+          <div key={index} className={`mb-2 ${msg.userId === user.id ? 'text-right' : 'text-left'}`}>
+            <span
