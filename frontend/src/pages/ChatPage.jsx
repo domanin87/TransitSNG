@@ -1,91 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { io } from 'socket.io-client';
-import { apiRequest } from '../index';
+// frontend/src/pages/ChatPage.jsx
+import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import { getMessages } from "../api";
 
-export default function ChatPage({ user }) {
-  const { t } = useTranslation();
+const socket = io("wss://transitsng-backend.onrender.com", {
+  transports: ["websocket"],
+});
+
+const ChatPage = () => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [socket, setSocket] = useState(null);
+  const [input, setInput] = useState("");
 
+  // Загружаем старые сообщения
   useEffect(() => {
-    // Инициализация Socket.IO
-    const socketUrl = process.env.REACT_APP_API_URL || 'https://transitsng.onrender.com';
-    const newSocket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-      auth: { token: localStorage.getItem('token') },
-    });
-    setSocket(newSocket);
-
-    // Загрузка сообщений
     const loadMessages = async () => {
       try {
-        setLoading(true);
-        const data = await apiRequest('GET', '/api/messages');
+        const data = await getMessages();
         setMessages(data);
       } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        console.error("Ошибка загрузки сообщений:", err);
       }
     };
-
     loadMessages();
+  }, []);
 
-    // Обработчики Socket.IO
-    newSocket.on('connect_error', (err) => {
-      setError(`Ошибка подключения Socket.IO: ${err.message}`);
+  // Получаем новые сообщения по сокету
+  useEffect(() => {
+    socket.on("chat_message", (msg) => {
+      setMessages((prev) => [...prev, msg]);
     });
-
-    newSocket.on('message', (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-
     return () => {
-      newSocket.disconnect();
+      socket.off("chat_message");
     };
   }, []);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
-    try {
-      const messageData = { userId: user.id, content: newMessage, timestamp: new Date().toISOString() };
-      await apiRequest('POST', '/api/messages', messageData);
-      socket.emit('message', messageData);
-      setNewMessage('');
-    } catch (err) {
-      setError(err.message);
+  // Отправка сообщений
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (input.trim() !== "") {
+      socket.emit("chat_message", input);
+      setInput("");
     }
   };
 
-  if (loading) return <div className="text-center">{t('loading')}</div>;
-  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
-
   return (
-    <div className="flex flex-col h-screen">
-      <h2 className="text-2xl mb-4">{t('chat')}</h2>
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((msg, index) => (
-          <div key={index} className={`mb-2 ${msg.userId === user.id ? 'text-right' : 'text-left'}`}>
-            <span className="font-bold">{msg.userId === user.id ? t('you') : msg.userId}: </span>
-            {msg.content}
-            <span className="text-xs text-gray-500 ml-2">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+    <div className="chat-container">
+      <h2>Чат</h2>
+      <div className="chat-box">
+        {messages.map((msg, i) => (
+          <div key={i} className="chat-msg">
+            {msg}
           </div>
         ))}
       </div>
-      <div className="p-4 border-t">
+      <form onSubmit={sendMessage}>
         <input
-          className="input w-full"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder={t('type_message')}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Введите сообщение..."
         />
-        <button className="btn mt-2" onClick={sendMessage}>{t('send')}</button>
-      </div>
+        <button type="submit">Отправить</button>
+      </form>
     </div>
   );
-}
+};
+
+export default ChatPage;
