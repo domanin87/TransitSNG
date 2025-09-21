@@ -1,175 +1,180 @@
+// backend/routes/admin.js
+// Admin routes: edit users/drivers/admins (except superadmin), manage orders (archive/restore/assign),
+// payments summarization, tariffs management, news and vacancies CRUD.
 const express = require('express');
-const User = require('../models/User');
-const Cargo = require('../models/Cargo');
-const Transaction = require('../models/Transaction');
-const Tariff = require('../models/Tariff');
-const authMiddleware = require('../middleware/auth');
 const router = express.Router();
+const { Op } = require('sequelize');
+// Adjust these model imports to match your models/index.js exports
+const db = require('../models'); // assumes backend/models/index.js exports sequelize models
+const { User, Order, Payment, Tariff, News, Vacancy } = db;
 
-// Admin middleware
-const adminMiddleware = (req, res, next) => {
-  if (req.userRole !== 'admin' && req.userRole !== 'superadmin' && req.userRole !== 'moderator') {
-    return res.status(403).json({ error: 'Access denied. Admin required.' });
-  }
-  next();
-};
+// Middleware placeholder: replace with your auth middleware
+function requireAdmin(req, res, next) {
+    if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ error: 'admin required' });
+    }
+    next();
+}
 
-// Get dashboard statistics
-router.get('/dashboard', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const [
-      totalUsers,
-      totalDrivers,
-      totalCargos,
-      pendingCargos,
-      totalTransactions,
-      revenue
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: 'driver' }),
-      Cargo.countDocuments(),
-      Cargo.countDocuments({ status: 'moderation' }),
-      Transaction.countDocuments({ status: 'completed' }),
-      Transaction.aggregate([
-        { $match: { status: 'completed' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ])
-    ]);
+// Prevent non-superadmin from editing superadmin
+function preventSuperEdit(req, res, next) {
+    const targetId = parseInt(req.params.userId,10);
+    if (!targetId) return next();
+    User.findByPk(targetId).then(u => {
+        if (!u) return res.status(404).json({ error: 'user not found' });
+        if (u.isSuperAdmin && !(req.user && req.user.isSuperAdmin)) {
+            return res.status(403).json({ error: 'cannot edit superadmin' });
+        }
+        req.targetUser = u;
+        next();
+    }).catch(next);
+}
 
-    res.json({
-      statistics: {
-        totalUsers,
-        totalDrivers,
-        totalCargos,
-        pendingCargos,
-        totalTransactions,
-        revenue: revenue[0]?.total || 0
-      }
-    });
-  } catch (error) {
-    console.error('Get dashboard error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+// Edit user (GET/PUT/DELETE)
+router.get('/users/:userId', requireAdmin, async (req, res, next) => {
+    try {
+        const u = await User.findByPk(req.params.userId);
+        if (!u) return res.status(404).json({ error: 'not found' });
+        res.json(u);
+    } catch (err) { next(err); }
 });
 
-// Get users with pagination and filters
-router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { page = 1, limit = 10, role, search } = req.query;
-    const filter = {};
-
-    if (role) filter.role = role;
-    if (search) {
-      filter.$or = [
-        { name: new RegExp(search, 'i') },
-        { email: new RegExp(search, 'i') },
-        { phone: new RegExp(search, 'i') }
-      ];
-    }
-
-    const users = await User.find(filter)
-      .select('-password -verification')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await User.countDocuments(filter);
-
-    res.json({
-      users,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
-    });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+router.put('/users/:userId', requireAdmin, preventSuperEdit, async (req, res, next) => {
+    try {
+        const fields = ['name','email','phone','role','isAdmin','isDriver','isActive'];
+        const updates = {};
+        for (const f of fields) if (req.body[f] !== undefined) updates[f]=req.body[f];
+        await req.targetUser.update(updates);
+        res.json({ status: 'ok', user: req.targetUser });
+    } catch (err) { next(err); }
 });
 
-// Update user status
-router.put('/users/:userId/status', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-      req.params.userId,
-      { isActive: status },
-      { new: true }
-    ).select('-password -verification');
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ message: 'User status updated successfully', user });
-  } catch (error) {
-    console.error('Update user status error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+router.delete('/users/:userId', requireAdmin, preventSuperEdit, async (req, res, next) => {
+    try {
+        // soft delete
+        await req.targetUser.update({ isActive: false });
+        res.json({ status: 'archived' });
+    } catch (err) { next(err); }
 });
 
-// Moderate cargo
-router.put('/cargos/:cargoId/moderate', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { status, rejectionReason } = req.body;
-
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
-    const updateData = { status };
-    if (status === 'rejected' && rejectionReason) {
-      updateData.rejectionReason = rejectionReason;
-    }
-
-    const cargo = await Cargo.findByIdAndUpdate(
-      req.params.cargoId,
-      updateData,
-      { new: true }
-    )
-    .populate('createdBy', 'name email phone')
-    .populate('assignedTo.driver', 'name phone');
-
-    if (!cargo) {
-      return res.status(404).json({ error: 'Cargo not found' });
-    }
-
-    res.json({ message: `Cargo ${status} successfully`, cargo });
-  } catch (error) {
-    console.error('Moderate cargo error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+// Orders actions
+router.post('/orders/:orderId/action', requireAdmin, async (req, res, next) => {
+    try {
+        const order = await Order.findByPk(req.params.orderId);
+        if (!order) return res.status(404).json({ error: 'order not found' });
+        const action = req.body.action;
+        if (action === 'archive') {
+            await order.update({ archived: true });
+        } else if (action === 'restore') {
+            await order.update({ archived: false });
+        } else if (action === 'assign') {
+            const driverId = req.body.driverId;
+            await order.update({ driverId });
+        } else {
+            return res.status(400).json({ error: 'unknown action' });
+        }
+        res.json({ status: 'ok', order });
+    } catch (err) { next(err); }
 });
 
-// Get all transactions
-router.get('/transactions', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { page = 1, limit = 10, type, status } = req.query;
-    const filter = {};
+// Payments summarize: accept items as [{id, amount}] or ids array
+router.post('/payments/summarize', requireAdmin, async (req, res, next) => {
+    try {
+        let items = req.body.items;
+        if (!items && req.body.ids) {
+            const ids = req.body.ids;
+            items = await Payment.findAll({ where: { id: ids }});
+        }
+        let total = 0;
+        let breakdown = [];
+        if (Array.isArray(items)) {
+            for (const it of items) {
+                const amt = parseFloat(it.amount || it);
+                total += amt || 0;
+                breakdown.push({ id: it.id || null, amount: amt || 0 });
+            }
+        }
+        res.json({ total, breakdown, count: breakdown.length });
+    } catch (err) { next(err); }
+});
 
-    if (type) filter.type = type;
-    if (status) filter.status = status;
+// Tariffs: CRUD + filter by starts_with letter
+router.get('/tariffs', requireAdmin, async (req, res, next) => {
+    try {
+        const starts = req.query.starts_with;
+        const where = {};
+        if (starts) where.city = { [Op.iLike]: `${starts}%` };
+        const list = await Tariff.findAll({ where });
+        res.json(list);
+    } catch (err) { next(err); }
+});
 
-    const transactions = await Transaction.find(filter)
-      .populate('user', 'name email')
-      .populate('relatedEntity.id')
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+router.post('/tariffs', requireAdmin, async (req, res, next) => {
+    try {
+        const t = await Tariff.create(req.body);
+        res.json(t);
+    } catch (err) { next(err); }
+});
 
-    const total = await Transaction.countDocuments(filter);
+router.put('/tariffs/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const t = await Tariff.findByPk(req.params.id);
+        if (!t) return res.status(404).json({ error: 'not found' });
+        await t.update(req.body);
+        res.json(t);
+    } catch (err) { next(err); }
+});
 
-    res.json({
-      transactions,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
-    });
-  } catch (error) {
-    console.error('Get transactions error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+router.delete('/tariffs/:id', requireAdmin, async (req, res, next) => {
+    try {
+        const t = await Tariff.findByPk(req.params.id);
+        if (!t) return res.status(404).json({ error: 'not found' });
+        await t.destroy();
+        res.json({ status: 'deleted' });
+    } catch (err) { next(err); }
+});
+
+// News & Vacancies CRUD
+router.get('/news', requireAdmin, async (req, res, next) => {
+    const list = await News.findAll();
+    res.json(list);
+});
+router.post('/news', requireAdmin, async (req, res, next) => {
+    const n = await News.create(req.body);
+    res.json(n);
+});
+router.put('/news/:id', requireAdmin, async (req, res, next) => {
+    const n = await News.findByPk(req.params.id);
+    if (!n) return res.status(404).json({ error: 'not found' });
+    await n.update(req.body);
+    res.json(n);
+});
+router.delete('/news/:id', requireAdmin, async (req, res, next) => {
+    const n = await News.findByPk(req.params.id);
+    if (!n) return res.status(404).json({ error: 'not found' });
+    await n.destroy();
+    res.json({ status: 'deleted' });
+});
+
+router.get('/vacancies', requireAdmin, async (req, res, next) => {
+    const list = await Vacancy.findAll();
+    res.json(list);
+});
+router.post('/vacancies', requireAdmin, async (req, res, next) => {
+    const v = await Vacancy.create(req.body);
+    res.json(v);
+});
+router.put('/vacancies/:id', requireAdmin, async (req, res, next) => {
+    const v = await Vacancy.findByPk(req.params.id);
+    if (!v) return res.status(404).json({ error: 'not found' });
+    await v.update(req.body);
+    res.json(v);
+});
+router.delete('/vacancies/:id', requireAdmin, async (req, res, next) => {
+    const v = await Vacancy.findByPk(req.params.id);
+    if (!v) return res.status(404).json({ error: 'not found' });
+    await v.destroy();
+    res.json({ status: 'deleted' });
 });
 
 module.exports = router;
