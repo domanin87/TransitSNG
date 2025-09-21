@@ -1,5 +1,4 @@
 const express = require('express');
-const { Pool } = require('pg');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -12,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const compression = require('compression');
 const moment = require('moment');
+const db = require('./src/models');
 require('dotenv').config();
 
 const app = express();
@@ -29,15 +29,17 @@ app.use(helmet());
 app.use(compression());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-// Подключение к PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://transitsng:hQSN60UH1yRTMFWu5XRBB3MGJ576HPHl@dpg-d33fedqdbo4c73b69m1g-a.frankfurt-postgres.render.com/transitsng?sslmode=require',
+// Sync Sequelize models
+db.sequelize.sync({ force: false }).then(() => {
+  console.log('Database synced');
+}).catch((err) => {
+  console.error('Error syncing database:', err.message);
 });
 
-// Настройка Multer для загрузки файлов
+// Multer setup
 const upload = multer({ dest: 'uploads/' });
 
-// Настройка Nodemailer
+// Nodemailer setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -46,7 +48,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Middleware для проверки JWT
+// JWT Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -59,16 +61,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Socket.IO для сообщений
+// Socket.IO for messages
 io.on('connection', (socket) => {
   console.log('Пользователь подключён:', socket.id);
   socket.on('message', async (message) => {
     try {
-      const result = await pool.query(
-        'INSERT INTO messages (user_id, content, timestamp) VALUES ($1, $2, $3) RETURNING *',
-        [message.userId, message.content, message.timestamp]
-      );
-      io.emit('message', result.rows[0]);
+      const newMessage = await db.Message.create({
+        user_id: message.userId,
+        content: message.content,
+        timestamp: message.timestamp,
+      });
+      io.emit('message', newMessage);
     } catch (err) {
       console.error('Ошибка Socket.IO:', err.message);
     }
@@ -78,11 +81,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// Эндпоинты для сообщений
+// Message endpoints
 app.get('/api/messages', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM messages ORDER BY timestamp ASC');
-    res.json(result.rows);
+    const messages = await db.Message.findAll({ order: [['timestamp', 'ASC']] });
+    res.json(messages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -91,41 +94,38 @@ app.get('/api/messages', authenticateToken, async (req, res) => {
 app.post('/api/messages', authenticateToken, async (req, res) => {
   const { userId, content, timestamp } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO messages (user_id, content, timestamp) VALUES ($1, $2, $3) RETURNING *',
-      [userId, content, timestamp]
-    );
-    res.json(result.rows[0]);
+    const message = await db.Message.create({ user_id: userId, content, timestamp });
+    res.json(message);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для сервисов
+// Service endpoints
 app.get('/api/services', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM services');
-    res.json(result.rows);
+    const services = await db.Service.findAll();
+    res.json(services);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для тарифов
+// Tariff endpoints
 app.get('/api/tariffs', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM tariffs');
-    res.json(result.rows);
+    const tariffs = await db.Tariff.findAll();
+    res.json(tariffs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для заказов
+// Order endpoints
 app.get('/api/orders', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM orders');
-    res.json(result.rows);
+    const orders = await db.Order.findAll();
+    res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -134,11 +134,8 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
 app.post('/api/orders', authenticateToken, async (req, res) => {
   const { customer_id } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO orders (customer_id) VALUES ($1) RETURNING *',
-      [customer_id]
-    );
-    res.json(result.rows[0]);
+    const order = await db.Order.create({ customer_id });
+    res.json(order);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -148,11 +145,8 @@ app.put('/api/orders/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { customer_id } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE orders SET customer_id = $1 WHERE id = $2 RETURNING *',
-      [customer_id, id]
-    );
-    res.json(result.rows[0]);
+    const order = await db.Order.update({ customer_id }, { where: { id }, returning: true });
+    res.json(order[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -161,18 +155,18 @@ app.put('/api/orders/:id', authenticateToken, async (req, res) => {
 app.delete('/api/orders/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM orders WHERE id = $1', [id]);
+    await db.Order.destroy({ where: { id } });
     res.json({ message: 'Заказ удалён' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для пользователей
+// User endpoints
 app.get('/api/users', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
+    const users = await db.User.findAll();
+    res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -181,8 +175,8 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 app.get('/api/users/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    res.json(result.rows[0]);
+    const user = await db.User.findByPk(id);
+    res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -191,11 +185,8 @@ app.get('/api/users/:id', authenticateToken, async (req, res) => {
 app.post('/api/users', authenticateToken, async (req, res) => {
   const { id, name, email, phone } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO users (id, name, email, phone) VALUES ($1, $2, $3, $4) RETURNING *',
-      [id, name, email, phone]
-    );
-    res.json(result.rows[0]);
+    const user = await db.User.create({ id, name, email, phone });
+    res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -205,11 +196,8 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { name, email, phone } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING *',
-      [name, email, phone, id]
-    );
-    res.json(result.rows[0]);
+    const user = await db.User.update({ name, email, phone }, { where: { id }, returning: true });
+    res.json(user[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -218,18 +206,18 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
 app.delete('/api/users/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    await db.User.destroy({ where: { id } });
     res.json({ message: 'Пользователь удалён' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для водителей
+// Driver endpoints
 app.get('/api/drivers', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM drivers');
-    res.json(result.rows);
+    const drivers = await db.Driver.findAll();
+    res.json(drivers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -238,8 +226,8 @@ app.get('/api/drivers', authenticateToken, async (req, res) => {
 app.get('/api/drivers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM drivers WHERE id = $1', [id]);
-    res.json(result.rows[0]);
+    const driver = await db.Driver.findByPk(id);
+    res.json(driver);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -248,11 +236,8 @@ app.get('/api/drivers/:id', authenticateToken, async (req, res) => {
 app.post('/api/drivers', authenticateToken, upload.single('license'), async (req, res) => {
   const { name, license_number } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO drivers (name, license_number) VALUES ($1, $2) RETURNING *',
-      [name, license_number]
-    );
-    res.json(result.rows[0]);
+    const driver = await db.Driver.create({ name, license_number });
+    res.json(driver);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -262,11 +247,8 @@ app.put('/api/drivers/:id', authenticateToken, upload.single('license'), async (
   const { id } = req.params;
   const { name, license_number } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE drivers SET name = $1, license_number = $2 WHERE id = $3 RETURNING *',
-      [name, license_number, id]
-    );
-    res.json(result.rows[0]);
+    const driver = await db.Driver.update({ name, license_number }, { where: { id }, returning: true });
+    res.json(driver[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -275,18 +257,18 @@ app.put('/api/drivers/:id', authenticateToken, upload.single('license'), async (
 app.delete('/api/drivers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM drivers WHERE id = $1', [id]);
+    await db.Driver.destroy({ where: { id } });
     res.json({ message: 'Водитель удалён' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для платежей
+// Payment endpoints
 app.get('/api/payments', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM payments');
-    res.json(result.rows);
+    const payments = await db.Payment.findAll();
+    res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -295,8 +277,8 @@ app.get('/api/payments', authenticateToken, async (req, res) => {
 app.get('/api/payments/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM payments WHERE id = $1', [id]);
-    res.json(result.rows[0]);
+    const payment = await db.Payment.findByPk(id);
+    res.json(payment);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -305,11 +287,8 @@ app.get('/api/payments/:id', authenticateToken, async (req, res) => {
 app.post('/api/payments', authenticateToken, async (req, res) => {
   const { order_id, amount } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO payments (order_id, amount) VALUES ($1, $2) RETURNING *',
-      [order_id, amount]
-    );
-    res.json(result.rows[0]);
+    const payment = await db.Payment.create({ order_id, amount });
+    res.json(payment);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -319,11 +298,8 @@ app.put('/api/payments/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { order_id, amount } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE payments SET order_id = $1, amount = $2 WHERE id = $3 RETURNING *',
-      [order_id, amount, id]
-    );
-    res.json(result.rows[0]);
+    const payment = await db.Payment.update({ order_id, amount }, { where: { id }, returning: true });
+    res.json(payment[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -332,18 +308,18 @@ app.put('/api/payments/:id', authenticateToken, async (req, res) => {
 app.delete('/api/payments/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM payments WHERE id = $1', [id]);
+    await db.Payment.destroy({ where: { id } });
     res.json({ message: 'Платёж удалён' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для клиентов
+// Customer endpoints
 app.get('/api/customers', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM customers');
-    res.json(result.rows);
+    const customers = await db.Customer.findAll();
+    res.json(customers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -352,8 +328,8 @@ app.get('/api/customers', authenticateToken, async (req, res) => {
 app.get('/api/customers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM customers WHERE id = $1', [id]);
-    res.json(result.rows[0]);
+    const customer = await db.Customer.findByPk(id);
+    res.json(customer);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -362,11 +338,8 @@ app.get('/api/customers/:id', authenticateToken, async (req, res) => {
 app.post('/api/customers', authenticateToken, async (req, res) => {
   const { name, email, phone, company } = req.body;
   try {
-    const result = await pool.query(
-      'INSERT INTO customers (name, email, phone, company) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, email, phone, company]
-    );
-    res.json(result.rows[0]);
+    const customer = await db.Customer.create({ name, email, phone, company });
+    res.json(customer);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -376,11 +349,8 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { name, email, phone, company } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE customers SET name = $1, email = $2, phone = $3, company = $4 WHERE id = $5 RETURNING *',
-      [name, email, phone, company, id]
-    );
-    res.json(result.rows[0]);
+    const customer = await db.Customer.update({ name, email, phone, company }, { where: { id }, returning: true });
+    res.json(customer[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -389,36 +359,31 @@ app.put('/api/customers/:id', authenticateToken, async (req, res) => {
 app.delete('/api/customers/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM customers WHERE id = $1', [id]);
+    await db.Customer.destroy({ where: { id } });
     res.json({ message: 'Клиент удалён' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для дашборда
+// Dashboard endpoints
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
-    const orders = await pool.query('SELECT COUNT(*) FROM orders');
-    const customers = await pool.query('SELECT COUNT(*) FROM customers');
-    const drivers = await pool.query('SELECT COUNT(*) FROM drivers');
-    const payments = await pool.query('SELECT SUM(amount) FROM payments');
-    res.json({
-      orders: orders.rows[0].count,
-      customers: customers.rows[0].count,
-      drivers: drivers.rows[0].count,
-      payments: payments.rows[0].sum,
-    });
+    const orders = await db.Order.count();
+    const customers = await db.Customer.count();
+    const drivers = await db.Driver.count();
+    const payments = await db.Payment.sum('amount');
+    res.json({ orders, customers, drivers, payments });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для профиля
+// Profile endpoints
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.userId]);
-    res.json(result.rows[0]);
+    const user = await db.User.findByPk(req.user.userId);
+    res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -427,21 +392,18 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 app.put('/api/profile', authenticateToken, async (req, res) => {
   const { name, email, phone } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $4 RETURNING *',
-      [name, email, phone, req.user.userId]
-    );
-    res.json(result.rows[0]);
+    const user = await db.User.update({ name, email, phone }, { where: { id: req.user.userId }, returning: true });
+    res.json(user[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для настроек
+// Settings endpoints
 app.get('/api/settings', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM settings LIMIT 1');
-    res.json(result.rows[0]);
+    const settings = await db.Setting.findOne();
+    res.json(settings);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -450,25 +412,19 @@ app.get('/api/settings', authenticateToken, async (req, res) => {
 app.put('/api/settings', authenticateToken, async (req, res) => {
   const { site_name, currency, language } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE settings SET site_name = $1, currency = $2, language = $3 RETURNING *',
-      [site_name, currency, language]
-    );
-    res.json(result.rows[0]);
+    const settings = await db.Setting.update({ site_name, currency, language }, { where: {}, returning: true });
+    res.json(settings[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для отчетов
+// Report endpoints
 app.get('/api/reports/orders', authenticateToken, async (req, res) => {
   const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query(
-      'SELECT * FROM orders WHERE created_at BETWEEN $1 AND $2',
-      [startDate, endDate]
-    );
-    res.json(result.rows);
+    const orders = await db.Order.findAll({ where: { created_at: { [db.Sequelize.Op.between]: [startDate, endDate] } } });
+    res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -477,11 +433,8 @@ app.get('/api/reports/orders', authenticateToken, async (req, res) => {
 app.get('/api/reports/payments', authenticateToken, async (req, res) => {
   const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query(
-      'SELECT * FROM payments WHERE created_at BETWEEN $1 AND $2',
-      [startDate, endDate]
-    );
-    res.json(result.rows);
+    const payments = await db.Payment.findAll({ where: { created_at: { [db.Sequelize.Op.between]: [startDate, endDate] } } });
+    res.json(payments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -490,21 +443,18 @@ app.get('/api/reports/payments', authenticateToken, async (req, res) => {
 app.get('/api/reports/customers', authenticateToken, async (req, res) => {
   const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query(
-      'SELECT * FROM customers WHERE created_at BETWEEN $1 AND $2',
-      [startDate, endDate]
-    );
-    res.json(result.rows);
+    const customers = await db.Customer.findAll({ where: { created_at: { [db.Sequelize.Op.between]: [startDate, endDate] } } });
+    res.json(customers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для верификаций
+// Verification endpoints
 app.get('/api/verifications', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM verifications');
-    res.json(result.rows);
+    const verifications = await db.Verification.findAll();
+    res.json(verifications);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -513,8 +463,8 @@ app.get('/api/verifications', authenticateToken, async (req, res) => {
 app.get('/api/verifications/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM verifications WHERE id = $1', [id]);
-    res.json(result.rows[0]);
+    const verification = await db.Verification.findByPk(id);
+    res.json(verification);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -523,11 +473,8 @@ app.get('/api/verifications/:id', authenticateToken, async (req, res) => {
 app.put('/api/verifications/:id/approve', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query(
-      'UPDATE verifications SET status = $1 WHERE id = $2 RETURNING *',
-      ['approved', id]
-    );
-    res.json(result.rows[0]);
+    const verification = await db.Verification.update({ status: 'approved' }, { where: { id }, returning: true });
+    res.json(verification[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -536,11 +483,8 @@ app.put('/api/verifications/:id/approve', authenticateToken, async (req, res) =>
 app.put('/api/verifications/:id/reject', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query(
-      'UPDATE verifications SET status = $1 WHERE id = $2 RETURNING *',
-      ['rejected', id]
-    );
-    res.json(result.rows[0]);
+    const verification = await db.Verification.update({ status: 'rejected' }, { where: { id }, returning: true });
+    res.json(verification[1][0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -549,14 +493,14 @@ app.put('/api/verifications/:id/reject', authenticateToken, async (req, res) => 
 app.delete('/api/verifications/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query('DELETE FROM verifications WHERE id = $1', [id]);
+    await db.Verification.destroy({ where: { id } });
     res.json({ message: 'Верификация удалена' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Эндпоинты для авторизации
+// Auth endpoints
 app.post('/api/auth/register', [
   check('email').isEmail().normalizeEmail(),
   check('password').isLength({ min: 6 }),
@@ -569,12 +513,9 @@ app.post('/api/auth/register', [
   const { user_id, email, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO auth (user_id, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *',
-      [user_id, email, hashedPassword, role || 'user']
-    );
+    const auth = await db.Auth.create({ user_id, email, password: hashedPassword, role: role || 'user' });
     const token = jwt.sign({ userId: user_id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-    res.json({ user: result.rows[0], token });
+    res.json({ user: auth, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -591,17 +532,16 @@ app.post('/api/auth/login', [
 
   const { email, password } = req.body;
   try {
-    const result = await pool.query('SELECT * FROM auth WHERE email = $1', [email]);
-    if (result.rows.length === 0) {
+    const auth = await db.Auth.findOne({ where: { email } });
+    if (!auth) {
       return res.status(401).json({ error: 'Неверные учетные данные' });
     }
-    const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, auth.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Неверные учетные данные' });
     }
-    const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-    res.json({ user, token });
+    const token = jwt.sign({ userId: auth.user_id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+    res.json({ user: auth, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

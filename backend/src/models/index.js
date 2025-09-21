@@ -1,50 +1,214 @@
-const { Sequelize, DataTypes } = require('sequelize')
-const path = require('path')
+const { Sequelize, DataTypes } = require('sequelize');
+require('dotenv').config();
 
-const DATABASE_URL = process.env.DATABASE_URL || 'sqlite::memory:'
-const opts = DATABASE_URL.startsWith('postgres') ? {
+const sequelize = new Sequelize(process.env.DATABASE_URL || 'postgres://transitsng:hQSN60UH1yRTMFWu5XRBB3MGJ576HPHl@dpg-d33fedqdbo4c73b69m1g-a.frankfurt-postgres.render.com/transitsng?sslmode=require', {
   dialect: 'postgres',
-  protocol: 'postgres',
-  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } },
-  logging: false
-} : { logging: false }
+  logging: false,
+});
 
-const sequelize = new Sequelize(DATABASE_URL, opts)
+const db = {
+  Sequelize,
+  sequelize,
+};
 
-const User = sequelize.define('User', {
-  id: { type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
-  name: { type: DataTypes.STRING },
-  email: { type: DataTypes.STRING, unique:true, allowNull:false },
-  passwordHash: { type: DataTypes.STRING },
-  role: { type: DataTypes.STRING, defaultValue: 'user' } // use string to avoid enum migration issues
-}, { tableName: 'users', underscored:true, timestamps:true })
+// Define models
+db.Message = sequelize.define('Message', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  user_id: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+  },
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  timestamp: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+});
 
-const Order = sequelize.define('Order', {
-  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
-  title: { type: DataTypes.STRING },
-  origin: { type: DataTypes.STRING },
-  destination: { type: DataTypes.STRING },
-  price: { type: DataTypes.FLOAT },
-  currency: { type: DataTypes.STRING, defaultValue: 'USD' },
-  weight: { type: DataTypes.FLOAT },
-  status: { type: DataTypes.STRING, defaultValue: 'pending' },
-  trackingEnabled: { type: DataTypes.BOOLEAN, defaultValue: false }
-}, { tableName:'orders', underscored:true, timestamps:true })
+db.Service = sequelize.define('Service', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+});
 
-const Tariff = sequelize.define('Tariff', {
-  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
-  name: { type: DataTypes.STRING },
-  price_per_ton: { type: DataTypes.FLOAT }
-}, { tableName:'tariffs', underscored:true, timestamps:false })
+db.Tariff = sequelize.define('Tariff', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  rate: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+  },
+});
 
-const Message = sequelize.define('Message', {
-  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
-  orderId: { type: DataTypes.INTEGER, allowNull:true },
-  senderId: { type: DataTypes.INTEGER, allowNull:true },
-  text: { type: DataTypes.TEXT }
-}, { tableName:'messages', underscored:true, timestamps:true })
+db.Order = sequelize.define('Order', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  customer_id: {
+    type: DataTypes.STRING(50),
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.fn('NOW'),
+  },
+});
 
-User.hasMany(Order, { foreignKey: 'user_id' })
-Order.belongsTo(User, { foreignKey: 'user_id' })
+db.User = sequelize.define('User', {
+  id: {
+    type: DataTypes.STRING(50),
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING(100),
+  },
+  email: {
+    type: DataTypes.STRING(100),
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+  },
+});
 
-module.exports = { sequelize, User, Order, Tariff, Message, initModels: async ()=>{} }
+db.Driver = sequelize.define('Driver', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING(100),
+  },
+  license_number: {
+    type: DataTypes.STRING(50),
+  },
+});
+
+db.Payment = sequelize.define('Payment', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  order_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'Orders',
+      key: 'id',
+    },
+  },
+  amount: {
+    type: DataTypes.DECIMAL(10, 2),
+  },
+});
+
+db.Customer = sequelize.define('Customer', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING(100),
+  },
+  email: {
+    type: DataTypes.STRING(100),
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+  },
+  company: {
+    type: DataTypes.STRING(100),
+  },
+});
+
+db.Setting = sequelize.define('Setting', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  site_name: {
+    type: DataTypes.STRING(100),
+  },
+  currency: {
+    type: DataTypes.STRING(10),
+  },
+  language: {
+    type: DataTypes.STRING(10),
+  },
+});
+
+db.Verification = sequelize.define('Verification', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  user_id: {
+    type: DataTypes.STRING(50),
+  },
+  type: {
+    type: DataTypes.STRING(50),
+  },
+  status: {
+    type: DataTypes.STRING(20),
+  },
+  submitted_at: {
+    type: DataTypes.DATE,
+    defaultValue: Sequelize.fn('NOW'),
+  },
+});
+
+db.Auth = sequelize.define('Auth', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  user_id: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  password: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  role: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+  },
+});
+
+module.exports = db;
