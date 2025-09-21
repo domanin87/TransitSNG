@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { tariffsAPI } from '../../index';
+import { tariffsAPI } from '../index';
 
 export default function Tariffs({ userRole }) {
   const { t } = useTranslation();
