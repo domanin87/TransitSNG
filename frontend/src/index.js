@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { ordersAPI } from './api/orders';
 import { usersAPI } from './api/users';
+import { driversAPI } from './api/drivers';
+import { tariffsAPI } from './api/tariffs';
 
 const apiRequest = async (method, url, data = null) => {
   try {
@@ -29,4 +31,4 @@ const authAPI = {
   },
 };
 
-export { apiRequest, ordersAPI, usersAPI, authAPI };
+export { apiRequest, ordersAPI, usersAPI, authAPI, driversAPI, tariffsAPI };

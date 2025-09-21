@@ -7,11 +7,11 @@ export default function Drivers({ userRole }) {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDrivers, setSelectedDrivers] = useState([]);
   const [editingDriver, setEditingDriver] = useState(null);
-  const [newDriver, setNewDriver] = useState({ userId: '', license: '', vehicleType: '', status: 'pending' });
+  const [newDriver, setNewDriver] = useState({ name: '', email: '', phone: '', status: 'active' });
 
-  const canEdit = ['superadmin', 'admin'].includes(userRole);
-  const canVerify = ['superadmin', 'admin', 'moderator'].includes(userRole);
+  const canEdit = ['superadmin', 'admin', 'moderator'].includes(userRole);
 
   useEffect(() => {
     loadDrivers();
@@ -34,7 +34,7 @@ export default function Drivers({ userRole }) {
     try {
       const data = await driversAPI.create(newDriver);
       setDrivers([...drivers, data]);
-      setNewDriver({ userId: '', license: '', vehicleType: '', status: 'pending' });
+      setNewDriver({ name: '', email: '', phone: '', status: 'active' });
     } catch (err) {
       setError(err.message);
     }
@@ -61,26 +61,6 @@ export default function Drivers({ userRole }) {
     }
   };
 
-  const verifyDriver = async (id) => {
-    if (!canVerify) return;
-    try {
-      await driversAPI.verify(id);
-      loadDrivers();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const rejectDriver = async (id) => {
-    if (!canVerify) return;
-    try {
-      await driversAPI.reject(id);
-      loadDrivers();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   if (loading) return <div className="text-center">{t('loading')}</div>;
   if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
@@ -93,21 +73,22 @@ export default function Drivers({ userRole }) {
           <div className="grid gap-2">
             <input
               className="input"
-              placeholder={t('user_id')}
-              value={newDriver.userId}
-              onChange={(e) => setNewDriver({ ...newDriver, userId: e.target.value })}
+              placeholder={t('name')}
+              value={newDriver.name}
+              onChange={(e) => setNewDriver({ ...newDriver, name: e.target.value })}
             />
             <input
               className="input"
-              placeholder={t('license')}
-              value={newDriver.license}
-              onChange={(e) => setNewDriver({ ...newDriver, license: e.target.value })}
+              placeholder={t('email')}
+              type="email"
+              value={newDriver.email}
+              onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
             />
             <input
               className="input"
-              placeholder={t('vehicle_type')}
-              value={newDriver.vehicleType}
-              onChange={(e) => setNewDriver({ ...newDriver, vehicleType: e.target.value })}
+              placeholder={t('phone')}
+              value={newDriver.phone}
+              onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
             />
             <button className="btn" onClick={addDriver}>{t('add')}</button>
           </div>
@@ -116,70 +97,81 @@ export default function Drivers({ userRole }) {
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-gray-200">
+            <th className="text-left p-3">
+              <input
+                type="checkbox"
+                onChange={(e) => setSelectedDrivers(e.target.checked ? drivers.map((d) => d.id) : [])}
+                checked={selectedDrivers.length === drivers.length && drivers.length > 0}
+              />
+            </th>
             <th className="text-left p-3">{t('id')}</th>
-            <th className="text-left p-3">{t('user_id')}</th>
-            <th className="text-left p-3">{t('license')}</th>
-            <th className="text-left p-3">{t('vehicle_type')}</th>
+            <th className="text-left p-3">{t('name')}</th>
+            <th className="text-left p-3">{t('email')}</th>
+            <th className="text-left p-3">{t('phone')}</th>
             <th className="text-left p-3">{t('status')}</th>
-            {(canEdit || canVerify) && <th className="text-left p-3">{t('actions')}</th>}
+            {canEdit && <th className="text-left p-3">{t('actions')}</th>}
           </tr>
         </thead>
         <tbody>
           {drivers.map((driver) => (
             <tr key={driver.id} className="border-b border-gray-200">
+              <td className="p-3">
+                <input
+                  type="checkbox"
+                  checked={selectedDrivers.includes(driver.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedDrivers([...selectedDrivers, driver.id]);
+                    } else {
+                      setSelectedDrivers(selectedDrivers.filter((id) => id !== driver.id));
+                    }
+                  }}
+                />
+              </td>
               <td className="p-3">{driver.id}</td>
               <td className="p-3">
                 {editingDriver === driver.id ? (
                   <input
                     className="input"
-                    value={driver.user_id}
-                    onChange={(e) => updateDriver(driver.id, { ...driver, user_id: e.target.value })}
+                    value={driver.name}
+                    onChange={(e) => updateDriver(driver.id, { ...driver, name: e.target.value })}
                   />
                 ) : (
-                  driver.user_id
+                  driver.name
                 )}
               </td>
               <td className="p-3">
                 {editingDriver === driver.id ? (
                   <input
                     className="input"
-                    value={driver.license}
-                    onChange={(e) => updateDriver(driver.id, { ...driver, license: e.target.value })}
+                    value={driver.email}
+                    type="email"
+                    onChange={(e) => updateDriver(driver.id, { ...driver, email: e.target.value })}
                   />
                 ) : (
-                  driver.license
+                  driver.email
                 )}
               </td>
               <td className="p-3">
                 {editingDriver === driver.id ? (
                   <input
                     className="input"
-                    value={driver.vehicle_type}
-                    onChange={(e) => updateDriver(driver.id, { ...driver, vehicle_type: e.target.value })}
+                    value={driver.phone}
+                    onChange={(e) => updateDriver(driver.id, { ...driver, phone: e.target.value })}
                   />
                 ) : (
-                  driver.vehicle_type
+                  driver.phone
                 )}
               </td>
               <td className="p-3">{driver.status}</td>
-              {(canEdit || canVerify) && (
+              {canEdit && (
                 <td className="p-3">
                   {editingDriver === driver.id ? (
                     <button className="btn small" onClick={() => setEditingDriver(null)}>{t('save')}</button>
                   ) : (
                     <>
-                      {canEdit && (
-                        <>
-                          <button className="btn small mr-2" onClick={() => setEditingDriver(driver.id)}>{t('edit')}</button>
-                          <button className="btn small red" onClick={() => deleteDriver(driver.id)}>{t('delete')}</button>
-                        </>
-                      )}
-                      {canVerify && (
-                        <>
-                          <button className="btn small mr-2" onClick={() => verifyDriver(driver.id)}>{t('approve')}</button>
-                          <button className="btn small red" onClick={() => rejectDriver(driver.id)}>{t('reject')}</button>
-                        </>
-                      )}
+                      <button className="btn small mr-2" onClick={() => setEditingDriver(driver.id)}>{t('edit')}</button>
+                      <button className="btn small red" onClick={() => deleteDriver(driver.id)}>{t('delete')}</button>
                     </>
                   )}
                 </td>
