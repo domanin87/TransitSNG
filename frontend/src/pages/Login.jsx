@@ -9,40 +9,48 @@ export default function Login({ setUser }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      const { user, token } = await authAPI.login({ email, password });
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', token);
-      setUser(user);
-      navigate('/');
+      const data = await authAPI.login({ email, password });
+      setUser(data.user);
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container max-w-md">
-      <h2 className="text-2xl mb-4">{t('login')}</h2>
-      <div className="card">
-        {error && <div className="text-red-500 mb-4">{t('error')}: {error}</div>}
-        <div className="grid gap-2">
+    <div className="flex justify-center items-center h-screen">
+      <div className="card w-96">
+        <h2 className="text-2xl mb-4">{t('login')}</h2>
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+        <form onSubmit={handleLogin}>
           <input
-            className="input"
-            placeholder={t('email_or_phone')}
+            className="input mb-4"
+            type="email"
+            placeholder={t('email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <input
-            className="input"
+            className="input mb-4"
             type="password"
             placeholder={t('password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
-          <button className="btn" onClick={handleLogin}>{t('login')}</button>
-        </div>
+          <button className="btn w-full" type="submit" disabled={loading}>
+            {loading ? t('loading') : t('login')}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+import { apiRequest } from '../index';
 import Typeahead from '../components/Typeahead';
 import ServiceList from '../components/ServiceList';
 
@@ -14,8 +14,8 @@ export default function Home({ user }) {
     const fetchServices = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/services`);
-        setServices(response.data);
+        const data = await apiRequest('get', '/services');
+        setServices(data);
       } catch (err) {
         setError(err.message);
       } finally {

@@ -15,4 +15,18 @@ const apiRequest = async (method, url, data = null) => {
   }
 };
 
-export { apiRequest, ordersAPI, usersAPI };
+const authAPI = {
+  login: async (credentials) => {
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, credentials);
+    return response.data;
+  },
+  register: async (userData) => {
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/register`, userData);
+    return response.data;
+  },
+  logout: async () => {
+    await axios.post(`${process.env.REACT_APP_API_URL}/auth/logout`);
+  },
+};
+
+export { apiRequest, ordersAPI, usersAPI, authAPI };
