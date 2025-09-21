@@ -63,8 +63,8 @@ const Users = ({ userRole }) => {
               <th style={{ textAlign: 'left', padding: '12px' }}>ID</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Имя</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Контакты</th>
-              <th style={{ textAlign: 'left', padding: '12px' }}>Роль</极>
-              <th style={{ textAlign: 'left', padding: '极2px' }}>Статус</th>
+              <th style={{ textAlign: 'left', padding: '12px' }}>Роль</th>
+              <th style={{ textAlign: 'left', padding: '12px' }}>Статус</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Дата регистрации</th>
               {canEdit && <th style={{ textAlign: 'left', padding: '12px' }}>Действия</th>}
             </tr>

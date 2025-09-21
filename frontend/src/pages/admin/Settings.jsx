@@ -113,7 +113,7 @@ const Settings = ({ userRole }) => {
             />
           </div>
           <div>
-            <label>Комиссия платформы (%)</极>
+            <label>Комиссия платформы (%)</label>
             <input 
               type="number" 
               value={settings.commissionRate} 

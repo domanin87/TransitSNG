@@ -111,7 +111,7 @@ const Tariffs = ({ userRole }) => {
             <tr style={{ borderBottom: '1px solid #e6eef6' }}>
               <th style={{ textAlign: 'left', padding: '12px' }}>ID</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Маршрут</th>
-              <th style={{ textAlign: 'left', padding: '極', padding: '12px' }}>Расстояние</th>
+              <th style={{ textAlign: 'left', padding: '12px' }}>Расстояние</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Длительность</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Цена за км</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Минимальная цена</th>
@@ -124,7 +124,7 @@ const Tariffs = ({ userRole }) => {
                 <td style={{ padding: '12px' }}>{tariff.id}</td>
                 <td style={{ padding: '12px' }}>{tariff.from} → {tariff.to}</td>
                 <td style={{ padding: '12px' }}>{tariff.distance}</td>
-                <極 style={{ padding: '12px' }}>{tariff.duration}</td>
+                <td style={{ padding: '12px' }}>{tariff.duration}</td>
                 <td style={{ padding: '12px' }}>{tariff.pricePerKm}</td>
                 <td style={{ padding: '12px' }}>{tariff.minPrice}</td>
                 {canEdit && (

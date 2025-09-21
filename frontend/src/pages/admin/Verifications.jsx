@@ -100,10 +100,10 @@ const Verifications = ({ userRole }) => {
           <thead>
             <tr style={{ borderBottom: '1px solid #e6eef6' }}>
               <th style={{ textAlign: 'left', padding: '12px' }}>ID</th>
-              <th style={{ textAlign: '极', padding: '12px' }}>Пользователь</th>
+              <th style={{ textAlign: 'left', padding: '12px' }}>Пользователь</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Тип документа</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Номер документа</th>
-              <极 style={{ textAlign: 'left', padding: '12px' }}>Статус</th>
+              <th style={{ textAlign: 'left', padding: '12px' }}>Статус</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Дата подачи</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Документ</th>
               {canVerify && <th style={{ textAlign: 'left', padding: '12px' }}>Действия</th>}
