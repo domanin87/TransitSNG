@@ -9,6 +9,7 @@ import { dashboardAPI } from './api/dashboard';
 import { profileAPI } from './api/profile';
 import { settingsAPI } from './api/settings';
 import { reportsAPI } from './api/reports';
+import { verificationsAPI } from './api/verifications';
 
 const apiRequest = async (method, url, data = null) => {
   try {
@@ -37,4 +38,4 @@ const authAPI = {
   },
 };
 
-export { apiRequest, ordersAPI, usersAPI, authAPI, driversAPI, tariffsAPI, paymentsAPI, customersAPI, dashboardAPI, profileAPI, settingsAPI, reportsAPI };
+export { apiRequest, ordersAPI, usersAPI, authAPI, driversAPI, tariffsAPI, paymentsAPI, customersAPI, dashboardAPI, profileAPI, settingsAPI, reportsAPI, verificationsAPI };
