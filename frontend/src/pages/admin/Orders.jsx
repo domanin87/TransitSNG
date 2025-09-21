@@ -64,7 +64,7 @@ const Orders = ({ userRole }) => {
       case 'pending': return 'Ожидание';
       case 'completed': return 'Завершен';
       case 'cancelled': return 'Отменен';
-      default: return status;
+      default: return 'Неизвестно';
     }
   };
 

@@ -99,9 +99,27 @@ const Reports = ({ userRole }) => {
 
       <div className="card">
         <h3>Статистика заказов по дням</h3>
-        <table style={{ width: '100', borderCollapse: 'collapse', marginTop: '15px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '15px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e6eef6' }}>
               <th style={{ textAlign: 'left', padding: '12px' }}>Дата</th>
               <th style={{ textAlign: 'left', padding: '12px' }}>Количество заказов</th>
-              <th style={{ textAlign: '
+              <th style={{ textAlign: 'left', padding: '12px' }}>Доход</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordersByDay.map((day) => (
+              <tr key={day.date} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '12px' }}>{day.date}</td>
+                <td style={{ padding: '12px' }}>{day.orders}</td>
+                <td style={{ padding: '12px', fontWeight: 'bold' }}>{day.revenue}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default Reports;

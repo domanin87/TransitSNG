@@ -48,13 +48,16 @@ const Payments = ({ userRole }) => {
       case 'completed': return 'Завершен';
       case 'pending': return 'Ожидание';
       case 'failed': return 'Ошибка';
-      default: return status;
+      default: return 'Неизвестно';
     }
   };
 
   const totalRevenue = payments
     .filter(p => p.status === 'completed')
-    .reduce((sum, payment) => sum + parseInt(payment.commission.replace(/\s|₸/g, '')), 0);
+    .reduce((sum, payment) => {
+      const commissionValue = payment.commission ? parseInt(payment.commission.replace(/\s|₸/g, ''), 10) : 0;
+      return sum + (isNaN(commissionValue) ? 0 : commissionValue);
+    }, 0);
 
   return (
     <div>

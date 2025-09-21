@@ -15,6 +15,7 @@ const Users = ({ userRole }) => {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      if (!usersAPI) throw new Error('usersAPI не определен');
       const data = await usersAPI.getAll();
       setUsers(data);
     } catch (err) {
@@ -27,6 +28,7 @@ const Users = ({ userRole }) => {
   const changeRole = async (id, newRole) => {
     if (!canEdit) return;
     try {
+      if (!usersAPI) throw new Error('usersAPI не определен');
       await usersAPI.update(id, { role: newRole });
       setUsers(users.map(user => user.id === id ? { ...user, role: newRole } : user));
     } catch (err) {
@@ -37,6 +39,7 @@ const Users = ({ userRole }) => {
   const changeStatus = async (id, newStatus) => {
     if (!canEdit) return;
     try {
+      if (!usersAPI) throw new Error('usersAPI не определен');
       await usersAPI.update(id, { status: newStatus });
       setUsers(users.map(user => user.id === id ? { ...user, status: newStatus } : user));
     } catch (err) {
@@ -113,9 +116,9 @@ const Users = ({ userRole }) => {
                 <td style={{ padding: '12px' }}>{user.regDate}</td>
                 {canEdit && (
                   <td style={{ padding: '12px' }}>
-                    <button style={{ marginRight: '8px', padding: '6px 12px', background: '#f0f0f0', border: 'none', borderRadius: '4px' }}>
+                    {/* <button style={{ marginRight: '8px', padding: '6px 12px', background: '#f0f0f0', border: 'none', borderRadius: '4px' }}>
                       Редактировать
-                    </button>
+                    </button> */}
                   </td>
                 )}
               </tr>

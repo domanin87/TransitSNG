@@ -53,7 +53,7 @@ const Verifications = ({ userRole }) => {
       case 'driver_license': return 'Водительские права';
       case 'vehicle_registration': return 'Регистрация ТС';
       case 'passport': return 'Паспорт';
-      default: return type;
+      default: return 'Неизвестный тип';
     }
   };
 
@@ -71,7 +71,7 @@ const Verifications = ({ userRole }) => {
       case 'approved': return 'Подтверждено';
       case 'pending': return 'Ожидание';
       case 'rejected': return 'Отклонено';
-      default: return status;
+      default: return 'Неизвестно';
     }
   };
 

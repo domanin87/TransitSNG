@@ -15,8 +15,13 @@ const Admin = () => {
   const [userRole, setUserRole] = useState('moderator');
 
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    setUserRole(userData.role || 'moderator');
+    try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      setUserRole(userData.role || 'moderator');
+    } catch (err) {
+      console.error('Ошибка парсинга user из localStorage:', err);
+      setUserRole('moderator');
+    }
   }, []);
 
   return (
