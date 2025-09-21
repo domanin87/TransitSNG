@@ -1,57 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import ServiceList from '../components/ServiceList';
+import axios from 'axios';
 import Typeahead from '../components/Typeahead';
-import { apiRequest } from '../index';
+import ServiceList from '../components/ServiceList';
 
 export default function Services({ user }) {
   const { t } = useTranslation();
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [items, setItems] = useState([]);
-  const [logged, setLogged] = useState(!!user);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLogged(!!user);
-    loadServices();
-  }, [user]);
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/services`);
+        setServices(response.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, []);
 
-  const loadServices = async () => {
-    try {
-      const data = await apiRequest('/orders');
-      setItems(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const onSearch = async () => {
-    try {
-      const data = await apiRequest('/orders');
-      const filtered = data.filter((s) =>
-        (!from || s.from_city.toLowerCase().includes(from.toLowerCase())) &&
-        (!to || s.to_city.toLowerCase().includes(to.toLowerCase()))
-      );
-      setItems(filtered);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (loading) return <div className="text-center">{t('loading')}</div>;
+  if (error) return <div className="text-red-500">{t('error')}: {error}</div>;
 
   return (
-    <div className="container">
-      <h2 className="text-2xl mb-4">{t('services')}</h2>
-      <div className="hero-search">
-        <div className="search-panel">
-          <div className="flex gap-2">
-            <div className="flex-1"><Typeahead value={from} onChange={setFrom} placeholder={t('from')} /></div>
-            <div className="flex-1"><Typeahead value={to} onChange={setTo} placeholder={t('to')} /></div>
-            <input className="input small" type="date" />
-            <button className="btn" onClick={onSearch}>{t('find')}</button>
-          </div>
-        </div>
-      </div>
-      <ServiceList items={items} logged={logged} />
+    <div>
+      <h1 className="text-3xl mb-4">{t('services')}</h1>
+      <Typeahead
+        className="input mb-4"
+        placeholder={t('search_services')}
+        onChange={(val) => console.log('Search:', val)}
+      />
+      <ServiceList services={services} />
     </div>
   );
 }
