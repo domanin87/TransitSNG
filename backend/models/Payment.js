@@ -1,11 +1,8 @@
-'use strict';
-module.exports = (sequelize, DataTypes) => {
-  const Payment = sequelize.define('Payment', {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    orderId: { type: DataTypes.INTEGER },
-    amount: { type: DataTypes.DECIMAL(12,2) },
-    currency: { type: DataTypes.STRING },
-    status: { type: DataTypes.STRING }
-  }, {});
-  return Payment;
+const { DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
+  return sequelize.define('Payment', {
+    amount: { type: DataTypes.FLOAT, allowNull: false },
+    description: { type: DataTypes.STRING },
+  });
 };
