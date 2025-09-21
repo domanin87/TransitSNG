@@ -1,32 +1,15 @@
-const { Sequelize } = require('sequelize');
-const config = require('../config/sequelize.js')['production'];
+const { Sequelize } = require("sequelize");
 
-const sequelize = new Sequelize(config.url, {
-  dialect: 'postgres',
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: "postgres",
+  protocol: "postgres",
   logging: false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // важно для Render
+    },
+  },
 });
 
-// Импорт моделей
-const User = require('./user')(sequelize);
-const Order = require('./order')(sequelize);
-const Payment = require('./payment')(sequelize);
-const Tariff = require('./tariff')(sequelize);
-const News = require('./news')(sequelize);
-const Vacancy = require('./vacancy')(sequelize);
-
-// Связи (ассоциации)
-User.hasMany(Order);
-Order.belongsTo(User);
-
-User.hasMany(Payment);
-Payment.belongsTo(User);
-
-module.exports = {
-  sequelize,
-  User,
-  Order,
-  Payment,
-  Tariff,
-  News,
-  Vacancy,
-};
+module.exports = sequelize;
