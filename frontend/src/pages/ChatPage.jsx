@@ -13,10 +13,11 @@ export default function ChatPage({ user }) {
 
   useEffect(() => {
     // Инициализация Socket.IO
-    const socketUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    const socketUrl = process.env.REACT_APP_API_URL || 'https://transitsng.onrender.com';
     const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
+      auth: { token: localStorage.getItem('token') },
     });
     setSocket(newSocket);
 
@@ -70,4 +71,21 @@ export default function ChatPage({ user }) {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((msg, index) => (
           <div key={index} className={`mb-2 ${msg.userId === user.id ? 'text-right' : 'text-left'}`}>
-            <span
+            <span className="font-bold">{msg.userId === user.id ? t('you') : msg.userId}: </span>
+            {msg.content}
+            <span className="text-xs text-gray-500 ml-2">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+          </div>
+        ))}
+      </div>
+      <div className="p-4 border-t">
+        <input
+          className="input w-full"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder={t('type_message')}
+        />
+        <button className="btn mt-2" onClick={sendMessage}>{t('send')}</button>
+      </div>
+    </div>
+  );
+}

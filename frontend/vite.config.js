@@ -12,9 +12,14 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: process.env.REACT_APP_API_URL || 'https://transitsng.onrender.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      '/socket.io': {
+        target: process.env.REACT_APP_API_URL || 'https://transitsng.onrender.com',
+        changeOrigin: true,
+        ws: true,
       },
     },
   },
