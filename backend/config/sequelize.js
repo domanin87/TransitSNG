@@ -1,23 +1,18 @@
-require('dotenv').config();
+require("dotenv").config();
 
 module.exports = {
   development: {
-    username: process.env.DB_USER || "root",
+    username: process.env.DB_USER || "postgres",
     password: process.env.DB_PASS || null,
-    database: process.env.DB_NAME || "mydb",
+    database: process.env.DB_NAME || "transitsng_dev",
     host: process.env.DB_HOST || "127.0.0.1",
-    dialect: "mysql"
-  },
-  test: {
-    username: "root",
-    password: null,
-    database: "database_test",
-    host: "127.0.0.1",
-    dialect: "mysql"
+    dialect: "postgres"
   },
   production: {
     use_env_variable: "DATABASE_URL",
     dialect: "postgres",
+    protocol: "postgres",
+    logging: false,
     dialectOptions: {
       ssl: {
         require: true,
