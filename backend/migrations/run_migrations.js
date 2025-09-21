@@ -1,17 +1,20 @@
 const { execSync } = require('child_process');
-const path = require('path');
 
 try {
-  // Run node-pg-migrate
-  console.log('Running node-pg-migrate...');
+  // Очистка блокировки перед запуском миграций
+  console.log('Проверка и очистка блокировки миграции...');
+  execSync('psql $DATABASE_URL -c "DELETE FROM pgmigrations WHERE name = \'lock\'"', { stdio: 'inherit' });
+
+  // Запуск миграций node-pg-migrate
+  console.log('Запуск node-pg-migrate...');
   execSync('npx node-pg-migrate up', { stdio: 'inherit' });
 
-  // Run Sequelize migrations
-  console.log('Running Sequelize migrations...');
+  // Запуск миграций Sequelize
+  console.log('Запуск миграций Sequelize...');
   execSync('npx sequelize-cli db:migrate', { stdio: 'inherit' });
 
-  console.log('All migrations completed successfully');
+  console.log('Все миграции успешно завершены');
 } catch (err) {
-  console.error('Migration error:', err.message);
+  console.error('Ошибка миграции:', err.message);
   process.exit(1);
 }
