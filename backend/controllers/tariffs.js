@@ -1,0 +1,5 @@
+const db = require('../models'); const Tariff = db.Tariff; const { Op } = db.Sequelize;
+async function listTariffs(req,res){ const lang = req.lang || req.query.lang || 'ru'; const start = req.query.start_with; const where = {}; if(start) where.city = { [Op.iLike]: start + '%' }; const items = await Tariff.findAll({ where, order:[['city','ASC']] }); const mapped = items.map(t=>({ id:t.id, name: t['name_'+lang] || t.name_ru || t.name_en || t.name, city: t.city, price: t.price })); res.json(mapped); }
+async function createTariff(req,res){ const t = await Tariff.create(req.body); res.json(t); }
+async function updateTariff(req,res){ const t = await Tariff.findByPk(req.params.id); if(!t) return res.status(404).json({error:'not found'}); Object.assign(t, req.body); await t.save(); res.json(t); }
+module.exports = { listTariffs, createTariff, updateTariff };

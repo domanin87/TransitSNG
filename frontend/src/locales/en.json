@@ -1,13 +1,7 @@
 {
-  "from": "From",
-  "to": "To",
-  "find": "Find",
-  "login": "Login",
-  "register": "Register",
-  "post_cargo": "Post cargo",
-  "services": "Services",
-  "tariffs": "Tariffs",
-  "map": "Map",
-  "chat": "Chat",
+  "home_title": "TransitSNG",
+  "place_title": "Place Cargo",
+  "news": "News",
+  "vacancies": "Vacancies",
   "admin": "Admin"
 }

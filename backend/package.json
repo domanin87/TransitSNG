@@ -9,7 +9,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "migrate": "npx sequelize-cli db:migrate",
+    "migrate": "npx sequelize-cli db:migrate --env production",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
     "migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
     "migrate:create": "npx sequelize-cli migration:generate --name",
@@ -17,7 +17,8 @@
     "seed:undo": "npx sequelize-cli db:seed:undo:all",
     "seed:undo:all": "npx sequelize-cli db:seed:undo:all",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "start:prod": "NODE_ENV=production node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",

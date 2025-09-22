@@ -1,0 +1,2 @@
+import React from 'react'; import { useTranslation } from 'react-i18next';
+export default function LangSwitch(){ const { i18n } = useTranslation(); return (<div style={{display:'flex',gap:8}}><button onClick={()=>{ i18n.changeLanguage('kk'); localStorage.setItem('i18nextLng','kk'); }}>🇰🇿</button><button onClick={()=>{ i18n.changeLanguage('ru'); localStorage.setItem('i18nextLng','ru'); }}>🇷🇺</button><button onClick={()=>{ i18n.changeLanguage('en'); localStorage.setItem('i18nextLng','en'); }}>🇬🇧</button></div>); }

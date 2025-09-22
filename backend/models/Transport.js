@@ -1,15 +1,10 @@
-'use strict';
-module.exports = (sequelize, DataTypes) => {
-  const Transport = sequelize.define('Transport', {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    fromCity: { type: DataTypes.STRING },
-    toCity: { type: DataTypes.STRING },
-    capacity: { type: DataTypes.FLOAT },
-    vehicleType: { type: DataTypes.STRING },
-    licensePlate: { type: DataTypes.STRING },
-    driverName: { type: DataTypes.STRING },
-    contactPhone: { type: DataTypes.STRING },
-    availableFrom: { type: DataTypes.DATE }
-  }, {});
-  return Transport;
-};
+const { DataTypes } = require('sequelize');
+module.exports = (sequelize) => sequelize.define('Transport', {
+  id:{ type: DataTypes.INTEGER, primaryKey:true, autoIncrement:true },
+  user_id: { type: DataTypes.UUID },
+  title: DataTypes.STRING,
+  city: DataTypes.STRING,
+  capacity_kg: DataTypes.FLOAT,
+  body_type: DataTypes.STRING,
+  status: { type: DataTypes.STRING, defaultValue: 'available' }
+}, { tableName: 'transports', timestamps: true });

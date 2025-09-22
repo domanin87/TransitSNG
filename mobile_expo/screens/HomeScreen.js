@@ -1,0 +1,1 @@
+import React from 'react'; import { View, Text, Button } from 'react-native'; export default function HomeScreen({navigation}){ return (<View style={{flex:1,padding:16}}><Text>Home (Orders list demo)</Text><Button title='Place Cargo' onPress={()=>navigation.navigate('Place')} /><Button title='Chat' onPress={()=>navigation.navigate('Chat')} /></View>); }

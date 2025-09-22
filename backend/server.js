@@ -16,6 +16,9 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
+const langMw = require('./middleware/lang');
+app.use(langMw);
+
 const server = http.createServer(app);
 
 // Настройка CORS для фронтенда и бэкенда
@@ -1322,3 +1325,9 @@ server.listen(PORT, () => {
 });
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
+
+// Mount new feature routes
+try{ app.use('/api/cargo', require('./routes/cargo')); app.use('/api/transport', require('./routes/transport')); app.use('/api/messages', require('./routes/messages')); }catch(e){ console.log('feature routes missing', e); }
+
+// payments
+try{ app.use('/api/payments', require('./routes/payments')); }catch(e){ console.log('payments route mount failed', e); }

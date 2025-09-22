@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: transitsng-backend
+    env: node
+    plan: starter
+    buildCommand: 'cd backend && npm ci && npm run migrate && npm run start:prod'
+    startCommand: 'cd backend && npm run start:prod'
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: false
+      - key: SECRET_KEY
+        fromDatabase: false
+  - type: web
+    name: transitsng-frontend
+    env: static
+    buildCommand: 'cd frontend && npm ci && npm run build'
+    staticPublishPath: 'frontend/dist'
+    envVars:
+      - key: REACT_APP_API_URL
+        fromDatabase: false

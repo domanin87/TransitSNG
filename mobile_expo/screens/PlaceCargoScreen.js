@@ -1,0 +1,4 @@
+import React, {useState} from 'react'; import { View, Text, TextInput, Button } from 'react-native'; import axios from 'axios';
+export default function PlaceCargoScreen(){ const [title,setTitle]=useState(''); const [estimate,setEstimate]=useState(null);
+async function calc(){ const res = await axios.post((process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001') + '/api/cargo/estimate', { fromCoords:{lat:43.238949,lon:76.889709}, toCoords:{lat:51.160522,lon:71.470356} }); setEstimate(res.data); }
+return (<View style={{flex:1,padding:16}}><Text>Place Cargo (mobile)</Text><TextInput placeholder='Title' value={title} onChangeText={setTitle} style={{borderWidth:1,padding:8,marginVertical:8}} /><Button title='Estimate' onPress={calc} /><Text>{estimate?JSON.stringify(estimate):''}</Text></View>); }
