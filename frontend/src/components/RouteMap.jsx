@@ -1,16 +1,40 @@
-import React, {useEffect, useRef} from 'react';
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+// src/components/RouteMap.jsx
+import React from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-export default function RouteMap({ from, to, routeCoords }){
-  // from/to: { lat, lon } ; routeCoords: array of [lat, lon]
-  const center = (from && [from.lat, from.lon]) || (to && [to.lat, to.lon]) || [43.238949,76.889709];
-  return (<div style={{height:360, width:'100%', borderRadius:12, overflow:'hidden'}} className='card'>
-    <MapContainer center={center} zoom={6} style={{height:'100%', width:'100%'}}>
-      <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' attribution='&copy; OSM' />
-      {from && <Marker position={[from.lat, from.lon]} />}
-      {to && <Marker position={[to.lat, to.lon]} />}
-      {routeCoords && routeCoords.length>0 && <Polyline positions={routeCoords.map(c=>[c.lat,c.lon])} />}
-    </MapContainer>
-  </div>);
-}
+// Исправляем проблему с иконками Leaflet
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const RouteMap = () => {
+  return (
+    <div style={{ height: "500px", width: "100%" }}>
+      <MapContainer
+        center={[51.1694, 71.4491]} // координаты:  Астана
+        zoom={6}
+        style={{ height: "100%", width: "100%" }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={[51.1694, 71.4491]}>
+          <Popup>Это тестовая точка в Казахстане 🚚</Popup>
+        </Marker>
+      </MapContainer>
+    </div>
+  );
+};
+
+export default RouteMap;
